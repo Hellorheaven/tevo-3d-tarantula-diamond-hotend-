@@ -87,13 +87,13 @@
 #define EXT0_X_OFFSET 0
 #define EXT0_Y_OFFSET 0
 #define EXT0_Z_OFFSET 0
-#define EXT0_STEPS_PER_MM 376.14
+#define EXT0_STEPS_PER_MM 370
 #define EXT0_TEMPSENSOR_TYPE 1
 #define EXT0_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT0_HEATER_PIN HEATER_0_PIN
 #define EXT0_STEP_PIN ORIG_E0_STEP_PIN
 #define EXT0_DIR_PIN ORIG_E0_DIR_PIN
-#define EXT0_INVERSE 1
+#define EXT0_INVERSE 0
 #define EXT0_ENABLE_PIN ORIG_E0_ENABLE_PIN
 #define EXT0_ENABLE_ON 0
 #define EXT0_MIRROR_STEPPER 0
@@ -122,19 +122,19 @@
 #define EXT0_DESELECT_COMMANDS ""
 #define EXT0_EXTRUDER_COOLER_PIN -1
 #define EXT0_EXTRUDER_COOLER_SPEED 255
-#define EXT0_DECOUPLE_TEST_PERIOD 12000
+#define EXT0_DECOUPLE_TEST_PERIOD 60000
 #define EXT0_JAM_PIN -1
 #define EXT0_JAM_PULLUP 0
-#define EXT1_X_OFFSET 1440
+#define EXT1_X_OFFSET 0
 #define EXT1_Y_OFFSET 0
 #define EXT1_Z_OFFSET 0
-#define EXT1_STEPS_PER_MM 376.14
+#define EXT1_STEPS_PER_MM 370
 #define EXT1_TEMPSENSOR_TYPE 1
 #define EXT1_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT1_HEATER_PIN HEATER_0_PIN
 #define EXT1_STEP_PIN ORIG_E1_STEP_PIN
 #define EXT1_DIR_PIN ORIG_E1_DIR_PIN
-#define EXT1_INVERSE 1
+#define EXT1_INVERSE 0
 #define EXT1_ENABLE_PIN ORIG_E1_ENABLE_PIN
 #define EXT1_ENABLE_ON 0
 #define EXT1_MIRROR_STEPPER 0
@@ -163,19 +163,19 @@
 #define EXT1_DESELECT_COMMANDS ""
 #define EXT1_EXTRUDER_COOLER_PIN -1
 #define EXT1_EXTRUDER_COOLER_SPEED 255
-#define EXT1_DECOUPLE_TEST_PERIOD 12000
+#define EXT1_DECOUPLE_TEST_PERIOD 60000
 #define EXT1_JAM_PIN -1
 #define EXT1_JAM_PULLUP 0
 #define EXT2_X_OFFSET 0
 #define EXT2_Y_OFFSET 0
 #define EXT2_Z_OFFSET 0
-#define EXT2_STEPS_PER_MM 376.14
+#define EXT2_STEPS_PER_MM 370
 #define EXT2_TEMPSENSOR_TYPE 1
 #define EXT2_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT2_HEATER_PIN HEATER_0_PIN
 #define EXT2_STEP_PIN ORIG_E2_STEP_PIN
 #define EXT2_DIR_PIN ORIG_E2_DIR_PIN
-#define EXT2_INVERSE 1
+#define EXT2_INVERSE 0
 #define EXT2_ENABLE_PIN ORIG_E2_ENABLE_PIN
 #define EXT2_ENABLE_ON 0
 #define EXT2_MIRROR_STEPPER 0
@@ -204,19 +204,19 @@
 #define EXT2_DESELECT_COMMANDS ""
 #define EXT2_EXTRUDER_COOLER_PIN -1
 #define EXT2_EXTRUDER_COOLER_SPEED 255
-#define EXT2_DECOUPLE_TEST_PERIOD 12000
+#define EXT2_DECOUPLE_TEST_PERIOD 60000
 #define EXT2_JAM_PIN -1
 #define EXT2_JAM_PULLUP 0
 #define EXT3_X_OFFSET 0
 #define EXT3_Y_OFFSET 0
 #define EXT3_Z_OFFSET 0
-#define EXT3_STEPS_PER_MM 376.14
+#define EXT3_STEPS_PER_MM 370
 #define EXT3_TEMPSENSOR_TYPE 1
 #define EXT3_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT3_HEATER_PIN HEATER_0_PIN
 #define EXT3_STEP_PIN ORIG_E3_STEP_PIN
 #define EXT3_DIR_PIN ORIG_E3_DIR_PIN
-#define EXT3_INVERSE 1
+#define EXT3_INVERSE 0
 #define EXT3_ENABLE_PIN ORIG_E3_ENABLE_PIN
 #define EXT3_ENABLE_ON 0
 #define EXT3_MIRROR_STEPPER 0
@@ -245,19 +245,19 @@
 #define EXT3_DESELECT_COMMANDS ""
 #define EXT3_EXTRUDER_COOLER_PIN -1
 #define EXT3_EXTRUDER_COOLER_SPEED 255
-#define EXT3_DECOUPLE_TEST_PERIOD 12000
+#define EXT3_DECOUPLE_TEST_PERIOD 60000
 #define EXT3_JAM_PIN -1
 #define EXT3_JAM_PULLUP 0
 #define EXT4_X_OFFSET 0
 #define EXT4_Y_OFFSET 0
 #define EXT4_Z_OFFSET 0
-#define EXT4_STEPS_PER_MM 376.14
+#define EXT4_STEPS_PER_MM 370
 #define EXT4_TEMPSENSOR_TYPE 1
 #define EXT4_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT4_HEATER_PIN HEATER_0_PIN
 #define EXT4_STEP_PIN ORIG_E4_STEP_PIN
 #define EXT4_DIR_PIN ORIG_E4_DIR_PIN
-#define EXT4_INVERSE 1
+#define EXT4_INVERSE 0
 #define EXT4_ENABLE_PIN ORIG_E4_ENABLE_PIN
 #define EXT4_ENABLE_ON 0
 #define EXT4_MIRROR_STEPPER 0
@@ -286,12 +286,12 @@
 #define EXT4_DESELECT_COMMANDS ""
 #define EXT4_EXTRUDER_COOLER_PIN -1
 #define EXT4_EXTRUDER_COOLER_SPEED 255
-#define EXT4_DECOUPLE_TEST_PERIOD 12000
+#define EXT4_DECOUPLE_TEST_PERIOD 60000
 #define EXT4_JAM_PIN -1
 #define EXT4_JAM_PULLUP 0
 
 #define FEATURE_RETRACTION 1
-#define AUTORETRACT_ENABLED 0
+#define AUTORETRACT_ENABLED 1
 #define RETRACTION_LENGTH 3
 #define RETRACTION_LONG_LENGTH 13
 #define RETRACTION_SPEED 40
@@ -333,7 +333,7 @@
 // ############# Heated bed configuration ########################
 
 #define HAVE_HEATED_BED 1
-#define HEATED_BED_PREHEAT_TEMP 55
+#define HEATED_BED_PREHEAT_TEMP 50
 #define HEATED_BED_MAX_TEMP 120
 #define SKIP_M190_IF_WITHIN 3
 #define HEATED_BED_SENSOR_TYPE 1
@@ -380,7 +380,7 @@ automatically disabled.
 */
 
 #define SUPPORT_LASER 0
-#define LASER_PIN -1
+#define LASER_PIN 9
 #define LASER_ON_HIGH 1
 #define LASER_WARMUP_TIME 0
 #define LASER_PWM_MAX 255
@@ -491,10 +491,11 @@ It also can add a delay to wait for spindle to run on full speed.
 #define INVERT_X2_DIR 0
 #define INVERT_Y_DIR 0
 #define INVERT_Y2_DIR 0
-#define INVERT_Z_DIR 1
+#define INVERT_Z_DIR 0
 #define INVERT_Z2_DIR 0
 #define INVERT_Z3_DIR 0
 #define INVERT_Z4_DIR 0
+#define INVERT_Z5_DIR 0
 #define X_HOME_DIR -1
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR -1
@@ -602,6 +603,10 @@ It also can add a delay to wait for spindle to run on full speed.
 #define Z4_STEP_PIN   ORIG_E3_STEP_PIN
 #define Z4_DIR_PIN    ORIG_E3_DIR_PIN
 #define Z4_ENABLE_PIN ORIG_E3_ENABLE_PIN
+#define FEATURE_FIVE_ZSTEPPER 0
+#define Z5_STEP_PIN   ORIG_E4_STEP_PIN
+#define Z5_DIR_PIN    ORIG_E4_DIR_PIN
+#define Z5_ENABLE_PIN ORIG_E4_ENABLE_PIN
 #define FEATURE_DITTO_PRINTING 0
 #define USE_ADVANCE 0
 #define ENABLE_QUADRATIC_ADVANCE 0
@@ -650,7 +655,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define Z_PROBE_Z_OFFSET_MODE 0
 #define UI_BED_COATING 1
 #define FEATURE_Z_PROBE 1
-#define EXTRUDER_IS_Z_PROBE 0
+#define EXTRUDER_IS_Z_PROBE 1
 #define Z_PROBE_DISABLE_HEATERS 0
 #define Z_PROBE_BED_DISTANCE 10
 #define Z_PROBE_PIN ORIG_Z_MIN_PIN
@@ -664,7 +669,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define Z_PROBE_SWITCHING_DISTANCE 1
 #define Z_PROBE_REPETITIONS 1
 #define Z_PROBE_USE_MEDIAN 0
-#define Z_PROBE_HEIGHT 0.7
+#define Z_PROBE_HEIGHT 0.80
 #define Z_PROBE_DELAY 0
 #define Z_PROBE_START_SCRIPT ""
 #define Z_PROBE_FINISHED_SCRIPT ""
@@ -726,7 +731,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define LANGUAGE_CZ_ACTIVE 0
 #define LANGUAGE_PL_ACTIVE 0
 #define LANGUAGE_TR_ACTIVE 0
-#define UI_PRINTER_NAME "Tarantula"
+#define UI_PRINTER_NAME "Tarantula diamond full color"
 #define UI_PRINTER_COMPANY "TEVO"
 #define UI_PAGES_DURATION 4000
 #define UI_SPEEDDEPENDENT_POSITIONING 0
@@ -789,6 +794,7 @@ Values must be in range 1..255
     "z2Invert": 0,
     "z3Invert": 0,
     "z4Invert": 0,
+	"z5Invert": 0,
     "zInvertEnable": 0,
     "extruder": [
         {
@@ -802,7 +808,7 @@ Values must be in range 1..255
             "heaterPin": "HEATER_0_PIN",
             "maxFeedrate": 50,
             "startFeedrate": 20,
-            "invert": "1",
+            "invert": "0",
             "invertEnable": "0",
             "acceleration": 5000,
             "watchPeriod": 1,
@@ -814,7 +820,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 376.14,
+            "stepsPerMM": 370,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -856,7 +862,7 @@ Values must be in range 1..255
             "heaterPin": "HEATER_0_PIN",
             "maxFeedrate": 50,
             "startFeedrate": 20,
-            "invert": "1",
+            "invert": "0",
             "invertEnable": "0",
             "acceleration": 5000,
             "watchPeriod": 1,
@@ -868,7 +874,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 376.14,
+            "stepsPerMM": 370,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -876,7 +882,7 @@ Values must be in range 1..255
             "xOffset": 18,
             "yOffset": 0,
             "zOffset": 0,
-            "xOffsetSteps": 1440,
+            "xOffsetSteps": 0,
             "yOffsetSteps": 0,
             "zOffsetSteps": 0,
             "stepper": {
@@ -910,7 +916,7 @@ Values must be in range 1..255
             "heaterPin": "HEATER_0_PIN",
             "maxFeedrate": 50,
             "startFeedrate": 20,
-            "invert": "1",
+            "invert": "0",
             "invertEnable": "0",
             "acceleration": 5000,
             "watchPeriod": 1,
@@ -922,7 +928,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 376.14,
+            "stepsPerMM": 370,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -964,7 +970,7 @@ Values must be in range 1..255
             "heaterPin": "HEATER_0_PIN",
             "maxFeedrate": 50,
             "startFeedrate": 20,
-            "invert": "1",
+            "invert": "0",
             "invertEnable": "0",
             "acceleration": 5000,
             "watchPeriod": 1,
@@ -976,7 +982,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 376.14,
+            "stepsPerMM": 370,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -1018,7 +1024,7 @@ Values must be in range 1..255
             "heaterPin": "HEATER_0_PIN",
             "maxFeedrate": 50,
             "startFeedrate": 20,
-            "invert": "1",
+            "invert": "0",
             "invertEnable": "0",
             "acceleration": 5000,
             "watchPeriod": 1,
@@ -1030,7 +1036,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 376.14,
+            "stepsPerMM": 370,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -1115,8 +1121,8 @@ Values must be in range 1..255
     "xMinPos": 0,
     "yMinPos": 0,
     "zMinPos": 0,
-    "xLength": 220,
-    "yLength": 220,
+    "xLength": 200,
+    "yLength": 200,
     "zLength": 200,
     "alwaysCheckEndstops": "1",
     "disableX": "0",
@@ -1200,6 +1206,13 @@ Values must be in range 1..255
         "step": "ORIG_E3_STEP_PIN",
         "dir": "ORIG_E3_DIR_PIN",
         "enable": "ORIG_E3_ENABLE_PIN"
+    },
+    "mirrorZ5": "0",
+    "mirrorZ5Motor": {
+        "name": "Extruder 4",
+        "step": "ORIG_E4_STEP_PIN",
+        "dir": "ORIG_E4_DIR_PIN",
+        "enable": "ORIG_E4_ENABLE_PIN"
     },
     "dittoPrinting": "0",
     "featureServos": "0",
@@ -1315,7 +1328,7 @@ Values must be in range 1..255
     "fanThermoThermistorType": 1,
     "scalePidToMax": 0,
     "zProbePin": "ORIG_Z_MIN_PIN",
-    "zProbeBedDistance": 10,
+    "zProbeBedDistance": 0,
     "zProbeDisableHeaters": "0",
     "zProbePullup": "0",
     "zProbeOnHigh": "0",
@@ -1324,7 +1337,7 @@ Values must be in range 1..255
     "zProbeWaitBeforeTest": "0",
     "zProbeSpeed": 3,
     "zProbeXYSpeed": 100,
-    "zProbeHeight": 0.7,
+    "zProbeHeight": 0.67,
     "zProbeStartScript": "",
     "zProbeFinishedScript": "",
     "featureAutolevel": "1",
@@ -1620,12 +1633,16 @@ Values must be in range 1..255
     "TMC2130CSE0": -1,
     "TMC2130CSE1": -1,
     "TMC2130CSE2": -1,
+    "TMC2130CSE3": -1,
+    "TMC2130CSE4": -1,
     "TMC2130CurrentX": 1000,
     "TMC2130CurrentY": 1000,
     "TMC2130CurrentZ": 1000,
     "TMC2130CurrentE0": 1000,
     "TMC2130CurrentE1": 1000,
     "TMC2130CurrentE2": 1000,
+    "TMC2130CurrentE3": 1000,
+    "TMC2130CurrentE4": 1000,
     "TMC2130CoolstepTresholdX": 300,
     "TMC2130CoolstepTresholdY": 300,
     "TMC2130CoolstepTresholdZ": 300,
@@ -1635,6 +1652,8 @@ Values must be in range 1..255
     "microstepE0": 16,
     "microstepE1": 16,
     "microstepE2": 16,
+    "microstepE3": 16,
+    "microstepE4": 16,
     "parkPosX": 0,
     "parkPosY": 0,
     "parkPosZ": 10,

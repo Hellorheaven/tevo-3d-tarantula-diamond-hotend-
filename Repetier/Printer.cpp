@@ -988,6 +988,15 @@ void Printer::setup() {
 #endif
 #endif
 
+#if FEATURE_FIVE_ZSTEPPER
+    SET_OUTPUT(Z5_STEP_PIN);
+    SET_OUTPUT(Z5_DIR_PIN);
+#if Z5_ENABLE_PIN > -1
+    SET_OUTPUT(Z5_ENABLE_PIN);
+    WRITE(Z5_ENABLE_PIN, !Z_ENABLE_ON);
+#endif
+#endif
+
 #if defined(DOOR_PIN) && DOOR_PIN > -1
     SET_INPUT(DOOR_PIN);
 #if defined(DOOR_PULLUP) && DOOR_PULLUP

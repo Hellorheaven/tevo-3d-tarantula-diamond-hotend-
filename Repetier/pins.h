@@ -409,6 +409,18 @@ STEPPER_CURRENT_CONTROL
 #define ORIG_E1_DIR_PIN          34
 #define ORIG_E1_ENABLE_PIN       30
 
+#define ORIG_E2_STEP_PIN         64
+#define ORIG_E2_DIR_PIN          59
+#define ORIG_E2_ENABLE_PIN       44
+
+#define ORIG_E3_STEP_PIN         40
+#define ORIG_E3_DIR_PIN          63
+#define ORIG_E3_ENABLE_PIN       42
+
+#define ORIG_E4_STEP_PIN         57
+#define ORIG_E4_DIR_PIN          1
+#define ORIG_E4_ENABLE_PIN       58
+
 #define SDPOWER            -1
 #define SDSS               53
 #define ORIG_SDCARDDETECT 	    49
@@ -426,7 +438,9 @@ STEPPER_CURRENT_CONTROL
 #define TEMP_2_PIN         15
 #define E0_PINS ORIG_E0_STEP_PIN,ORIG_E0_DIR_PIN,ORIG_E0_ENABLE_PIN,
 #define E1_PINS ORIG_E1_STEP_PIN,ORIG_E1_DIR_PIN,ORIG_E1_ENABLE_PIN,
-
+#define E2_PINS ORIG_E2_STEP_PIN,ORIG_E2_DIR_PIN,ORIG_E2_ENABLE_PIN,
+#define E3_PINS ORIG_E3_STEP_PIN,ORIG_E3_DIR_PIN,ORIG_E3_ENABLE_PIN,
+#define E4_PINS ORIG_E4_STEP_PIN,ORIG_E4_DIR_PIN,ORIG_E4_ENABLE_PIN,
 
 #else // RAMPS_V_1_1 or RAMPS_V_1_2 as default
 
