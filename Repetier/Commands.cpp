@@ -523,6 +523,16 @@ TMC2130Stepper* tmcDriverByIndex(uint8_t index) {
             return Printer::tmc_driver_e2;
         break;
 #endif
+#if TMC2130_ON_EXT3
+        case 6: // E3 Axis
+            return Printer::tmc_driver_e3;
+        break;
+#endif
+#if TMC2130_ON_EXT4
+        case 7: // E4 Axis
+            return Printer::tmc_driver_e4;
+        break;
+#endif
         default:
             return NULL;
         break;
@@ -572,6 +582,12 @@ void motorCurrentReadings() {
 #endif
 #if TMC2130_ON_EXT2
     Com::printF(PSTR(" E2:"), (uint32_t)(Printer::tmc_driver_e2->rms_current()));
+#endif
+#if TMC2130_ON_EXT3
+    Com::printF(PSTR(" E3:"), (uint32_t)(Printer::tmc_driver_e3->rms_current()));
+#endif
+#if TMC2130_ON_EXT4
+    Com::printF(PSTR(" E4:"), (uint32_t)(Printer::tmc_driver_e4->rms_current()));
 #endif
     Com::printFLN(Com::tSpace);
 }
@@ -728,7 +744,13 @@ void microstepReadings() {
     Com::printF(PSTR(" E1:"), (uint32_t)(Printer::tmc_driver_e1->microsteps()));
 #endif
 #if TMC2130_ON_EXT2
-    Com::printF(PSTR(" E1:"), (uint32_t)(Printer::tmc_driver_e2->microsteps()));
+    Com::printF(PSTR(" E2:"), (uint32_t)(Printer::tmc_driver_e2->microsteps()));
+#endif
+#if TMC2130_ON_EXT3
+    Com::printF(PSTR(" E3:"), (uint32_t)(Printer::tmc_driver_e3->microsteps()));
+#endif
+#if TMC2130_ON_EXT4
+    Com::printF(PSTR(" E4:"), (uint32_t)(Printer::tmc_driver_e4->microsteps()));
 #endif
     Com::printFLN(Com::tSpace);
 }
@@ -2792,6 +2814,12 @@ void Commands::processMCode(GCode *com) {
 #if TMC2130_ON_EXT2
             Com::printF(PSTR(" E2:"), Printer::tmc_driver_e2->sg_stall_value());
 #endif
+#if TMC2130_ON_EXT3
+            Com::printF(PSTR(" E3:"), Printer::tmc_driver_e3->sg_stall_value());
+#endif
+#if TMC2130_ON_EXT4
+            Com::printF(PSTR(" E4:"), Printer::tmc_driver_e4->sg_stall_value());
+#endif
         }
 #if TMC2130_ON_X
         if(com->hasX()) {
@@ -2829,6 +2857,18 @@ void Commands::processMCode(GCode *com) {
             Printer::tmc_driver_e2->sg_stall_value(com->G);
         }
 #endif
+#if TMC2130_ON_EXT3
+        if(com->hasE()) {
+            Com::printF(PSTR(" E3:"), com->K);
+            Printer::tmc_driver_e3->sg_stall_value(com->K);
+        }
+#endif
+#if TMC2130_ON_EXT4
+        if(com->hasE()) {
+            Com::printF(PSTR(" E4:"), com->N);
+            Printer::tmc_driver_e4->sg_stall_value(com->N);
+        }
+#endif
         Com::println();
     break;
     case 915: // Configure StealthChop on Trinamic TMC2130
@@ -2851,6 +2891,12 @@ void Commands::processMCode(GCode *com) {
 #endif
 #if TMC2130_ON_EXT2
             Com::printF(PSTR(" E2:"), Printer::tmc_driver_e2->stealthChop());
+#endif
+#if TMC2130_ON_EXT3
+            Com::printF(PSTR(" E3:"), Printer::tmc_driver_e3->stealthChop());
+#endif
+#if TMC2130_ON_EXT4
+            Com::printF(PSTR(" E4:"), Printer::tmc_driver_e4->stealthChop());
 #endif
         }
 #if TMC2130_ON_X
@@ -2887,6 +2933,18 @@ void Commands::processMCode(GCode *com) {
         if(com->hasE()) {
             Com::printF(PSTR(" E2:"), com->G);
             Printer::tmc_driver_e2->stealthChop((bool)(com->G));
+        }
+#endif
+#if TMC2130_ON_EXT3
+        if(com->hasE()) {
+            Com::printF(PSTR(" E3:"), com->K);
+            Printer::tmc_driver_e3->stealthChop((bool)(com->K));
+        }
+#endif
+#if TMC2130_ON_EXT4
+        if(com->hasE()) {
+            Com::printF(PSTR(" E4:"), com->N);
+            Printer::tmc_driver_e4->stealthChop((bool)(com->N));
         }
 #endif
         Com::println();

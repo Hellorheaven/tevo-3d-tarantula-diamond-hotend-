@@ -1646,6 +1646,22 @@ void Extruder::setDirection(uint8_t dir) {
                 RESET_EXTRUDER_JAM(3, dir)
             }
 #endif
+#if NUM_EXTRUDER > 4
+            if(Extruder::dittoMode > 3) {
+                if(dir) {
+                    WRITE(EXT4_DIR_PIN, !EXT4_INVERSE);
+#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER
+                    WRITE(EXT4_DIR2_PIN, !EXT4_INVERSE2);
+#endif
+                } else {
+                    WRITE(EXT4_DIR_PIN, EXT4_INVERSE);
+#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER
+                    WRITE(EXT4_DIR2_PIN, EXT4_INVERSE2);
+#endif
+                }
+                RESET_EXTRUDER_JAM(4, dir)
+            }
+#endif
         }
 #endif
         break;
@@ -1801,6 +1817,13 @@ void Extruder::enable() {
 #if defined(EXT3_MIRROR_STEPPER) && EXT3_MIRROR_STEPPER && NUM_EXTRUDER > 3
             WRITE(EXT3_ENABLE2_PIN, EXT3_ENABLE_ON);
 #endif
+#if NUM_EXTRUDER > 4
+        if(Extruder::dittoMode > 3 && extruder[4].enablePin > -1) {
+            digitalWrite(extruder[4].enablePin, extruder[4].enableOn);
+#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER && NUM_EXTRUDER > 4
+            WRITE(EXT4_ENABLE2_PIN, EXT4_ENABLE_ON);
+#endif
+
         }
 #endif
     }
@@ -1906,6 +1929,12 @@ void Extruder::disableCurrentExtruderMotor() {
             HAL::digitalWrite(extruder[3].enablePin, !extruder[3].enableOn);
 #if defined(EXT3_MIRROR_STEPPER) && EXT3_MIRROR_STEPPER && NUM_EXTRUDER > 3
             WRITE(EXT3_ENABLE2_PIN, !EXT3_ENABLE_ON);
+#endif
+#if NUM_EXTRUDER > 4
+        if(Extruder::dittoMode > 3 && extruder[4].enablePin > -1) {
+            HAL::digitalWrite(extruder[4].enablePin, !extruder[4].enableOn);
+#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER && NUM_EXTRUDER > 4
+            WRITE(EXT4_ENABLE2_PIN, !EXT4_ENABLE_ON);
 #endif
         }
 #endif

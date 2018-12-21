@@ -355,6 +355,12 @@ UI_PAGE4_T(ui_page3
 #if NUM_EXTRUDER>2 && MIXING_EXTRUDER == 0
            , UI_TEXT_PAGE_EXTRUDER3_ID
 #endif
+#if NUM_EXTRUDER>3 && MIXING_EXTRUDER == 0
+           , UI_TEXT_PAGE_EXTRUDER4_ID
+#endif
+#if NUM_EXTRUDER>4 && MIXING_EXTRUDER == 0
+           , UI_TEXT_PAGE_EXTRUDER5_ID
+#endif
 #if HAVE_HEATED_BED
            , UI_TEXT_PAGE_BED_ID
 #endif
