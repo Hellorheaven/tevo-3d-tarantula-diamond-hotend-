@@ -669,7 +669,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define Z_PROBE_SWITCHING_DISTANCE 1
 #define Z_PROBE_REPETITIONS 1
 #define Z_PROBE_USE_MEDIAN 0
-#define Z_PROBE_HEIGHT 0.80
+#define Z_PROBE_HEIGHT 0.7
 #define Z_PROBE_DELAY 0
 #define Z_PROBE_START_SCRIPT ""
 #define Z_PROBE_FINISHED_SCRIPT ""
