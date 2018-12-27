@@ -369,8 +369,11 @@ STEPPER_CURRENT_CONTROL
 #elif MOTHERBOARD == 38
 #define RAMPS_V_1_3
 #define MPX3
+#elif MOTHERBOARD == 40
+#define RAMPS_V_1_3
+#define MKSGENLDIAMOND
 #endif
-#if MOTHERBOARD == 3 || MOTHERBOARD == 33 || MOTHERBOARD == 34 || MOTHERBOARD == 35 || MOTHERBOARD == 39 || MOTHERBOARD == 38
+#if MOTHERBOARD == 3 || MOTHERBOARD == 33 || MOTHERBOARD == 34 || MOTHERBOARD == 35 || MOTHERBOARD == 39 || MOTHERBOARD == 38 || MOTHERBOARD == 40
 #define KNOWN_BOARD 1
 
 #if !(defined (__AVR_ATmega1280__ ) || defined (__AVR_ATmega2560__ ))
@@ -409,18 +412,6 @@ STEPPER_CURRENT_CONTROL
 #define ORIG_E1_DIR_PIN          34
 #define ORIG_E1_ENABLE_PIN       30
 
-#define ORIG_E2_STEP_PIN         64
-#define ORIG_E2_DIR_PIN          59
-#define ORIG_E2_ENABLE_PIN       44
-
-#define ORIG_E3_STEP_PIN         40
-#define ORIG_E3_DIR_PIN          63
-#define ORIG_E3_ENABLE_PIN       42
-
-#define ORIG_E4_STEP_PIN         57
-#define ORIG_E4_DIR_PIN          1
-#define ORIG_E4_ENABLE_PIN       58
-
 #define SDPOWER            -1
 #define SDSS               53
 #define ORIG_SDCARDDETECT 	    49
@@ -438,9 +429,7 @@ STEPPER_CURRENT_CONTROL
 #define TEMP_2_PIN         15
 #define E0_PINS ORIG_E0_STEP_PIN,ORIG_E0_DIR_PIN,ORIG_E0_ENABLE_PIN,
 #define E1_PINS ORIG_E1_STEP_PIN,ORIG_E1_DIR_PIN,ORIG_E1_ENABLE_PIN,
-#define E2_PINS ORIG_E2_STEP_PIN,ORIG_E2_DIR_PIN,ORIG_E2_ENABLE_PIN,
-#define E3_PINS ORIG_E3_STEP_PIN,ORIG_E3_DIR_PIN,ORIG_E3_ENABLE_PIN,
-#define E4_PINS ORIG_E4_STEP_PIN,ORIG_E4_DIR_PIN,ORIG_E4_ENABLE_PIN,
+
 
 #else // RAMPS_V_1_1 or RAMPS_V_1_2 as default
 
@@ -623,6 +612,23 @@ STEPPER_CURRENT_CONTROL
 
 #undef HEATER_2_PIN
 #define HEATER_2_PIN      7
+#endif
+
+#ifdef MKSGENLDIAMOND
+#define ORIG_E2_STEP_PIN         64
+#define ORIG_E2_DIR_PIN          59
+#define ORIG_E2_ENABLE_PIN       44
+
+#define ORIG_E3_STEP_PIN         40
+#define ORIG_E3_DIR_PIN          63
+#define ORIG_E3_ENABLE_PIN       42
+
+#define ORIG_E4_STEP_PIN         57
+#define ORIG_E4_DIR_PIN          1
+#define ORIG_E4_ENABLE_PIN       58
+#define E2_PINS ORIG_E2_STEP_PIN,ORIG_E2_DIR_PIN,ORIG_E2_ENABLE_PIN,
+#define E3_PINS ORIG_E3_STEP_PIN,ORIG_E3_DIR_PIN,ORIG_E3_ENABLE_PIN,
+#define E4_PINS ORIG_E4_STEP_PIN,ORIG_E4_DIR_PIN,ORIG_E4_ENABLE_PIN,
 #endif
 
 #endif
