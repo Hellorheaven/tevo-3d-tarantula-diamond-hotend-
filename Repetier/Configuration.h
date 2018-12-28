@@ -731,7 +731,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define LANGUAGE_CZ_ACTIVE 0
 #define LANGUAGE_PL_ACTIVE 0
 #define LANGUAGE_TR_ACTIVE 0
-#define UI_PRINTER_NAME "Tarantula diamond full color"
+#define UI_PRINTER_NAME "Tarantula Diamond Full Color"
 #define UI_PRINTER_COMPANY "TEVO"
 #define UI_PAGES_DURATION 4000
 #define UI_SPEEDDEPENDENT_POSITIONING 0
@@ -1226,7 +1226,7 @@ Values must be in range 1..255
     "extrudeMaxLength": 160,
     "homeOrder": "HOME_ORDER_XYZ",
     "featureController": 2,
-    "uiPrinterName": "Tarantula",
+    "uiPrinterName": "Tarantula Diamond Full Color",
     "uiPrinterCompany": "TEVO",
     "uiPagesDuration": 4000,
     "uiHeadline": "",
