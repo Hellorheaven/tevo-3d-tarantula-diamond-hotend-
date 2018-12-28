@@ -613,7 +613,7 @@ STEPPER_CURRENT_CONTROL
 #undef HEATER_2_PIN
 #define HEATER_2_PIN      7
 #endif
-
+//only for MKS GEN L and 3 MKS STEPPER for Diamond Full color(may be other board)
 #ifdef MKSGENLDIAMOND
 #define ORIG_E2_STEP_PIN         64
 #define ORIG_E2_DIR_PIN          59
@@ -3261,4 +3261,3 @@ S3(ext)=9
         ORIG_Z_DIR_PIN, ORIG_Z_ENABLE_PIN, ORIG_Z_MIN_PIN, ORIG_Z_MAX_PIN, LED_PIN, ORIG_PS_ON_PIN, \
         HEATER_0_PIN, HEATER_1_PIN, /*ORIG_FAN_PIN,*/ E0_PINS E1_PINS E2_PINS TEMP_0_PIN, TEMP_1_PIN,SDSS }
 #endif
-
