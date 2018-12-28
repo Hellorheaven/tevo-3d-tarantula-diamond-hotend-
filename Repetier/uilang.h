@@ -421,6 +421,9 @@
 #define UI_TEXT_RESET_EEPROM_ID 311
 #define UI_TEXT_EEPROM_RESETEDA_ID 312
 #define UI_TEXT_EEPROM_RESETEDB_ID 313
+#define UI_TEXT_PAGE_EXTRUDER4_ID 314 //     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_ID 315 //     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_ID 316 //     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // Universal definitions
 
@@ -767,6 +770,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_EN "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_EN "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_EN "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_EN     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_EN     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_EN     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // *************** German translation ****************
 
@@ -1107,6 +1113,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_DE "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_DE "Mul: %om%%%    Spi:%opRPM"
 #define UI_TEXT_JAMCONTROL_DE "%ej Blockaden" STR_uuml "berw."
+#define UI_TEXT_PAGE_EXTRUDER4_DE     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_DE     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_DE     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // Dutch translation
 
@@ -1393,8 +1402,8 @@
 #define UI_TEXT_EXTR5_SELECT_NL "%X5 Select Extr. 6"
 #define UI_TEXT_DITTO_0_NL "%D0 Geen Kopieen"
 #define UI_TEXT_DITTO_1_NL "%D1 1 Kopie"
-#define UI_TEXT_DITTO_2_NL "%D2 2 Kopieën"
-#define UI_TEXT_DITTO_3_NL "%D3 3 Kopieën"
+#define UI_TEXT_DITTO_2_NL "%D2 2 KopieÃ«n"
+#define UI_TEXT_DITTO_3_NL "%D3 3 KopieÃ«n"
 #define UI_TEXT_ZPROBE_HEIGHT_NL "Z-probe hoogte:%zh"
 
 #define UI_TEXT_OFFSETS_NL "Set print offsets"
@@ -1446,6 +1455,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_NL "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_NL "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_NL "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_NL     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_NL     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_NL     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // *************** Brazilian portuguese translation ****************
 
@@ -1453,7 +1465,7 @@
 #define UI_TEXT_OFF_PT              "Off"
 #define UI_TEXT_NA_PT               "N/A" // Output for not available
 #define UI_TEXT_YES_PT              "Sim"
-#define UI_TEXT_NO_PT               "Não"
+#define UI_TEXT_NO_PT               "NÃ£o"
 #define UI_TEXT_SEL_PT              cSEL
 #define UI_TEXT_NOSEL_PT            cUNSEL
 #define UI_TEXT_PRINT_POS_PT        "Imprimindo..."
@@ -1786,6 +1798,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_PT "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_PT "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_PT "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_PT     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_PT     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_PT     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // *************** Italian translation ****************
 
@@ -2124,6 +2139,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_IT "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_IT "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_IT "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_IT     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_IT     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_IT     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // Spanish translation
 
@@ -2462,6 +2480,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_ES "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_ES "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_ES "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_ES     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_ES     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_ES     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 
 // *************** Swedish translation ****************
@@ -2804,6 +2825,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_SE "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_SE "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_SE "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_SE     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_SE     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_SE     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 
 // *************** French translation ****************
@@ -3144,6 +3168,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_FR "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_FR "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_FR "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_FR     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_FR     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_FR     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // *************** Czech translation ****************
 // ***************      By Majkl     ****************
@@ -3332,7 +3359,7 @@
 #define UI_TEXT_PAGE_BED_CZ          " B:%eb/%Eb\002C\176%ob"
 #define UI_TEXT_SPEED_MULTIPLY_CZ    "Rychlost:%om%%%"
 #define UI_TEXT_FLOW_MULTIPLY_CZ     "Flow nasobit:%of%%%"
-#define UI_TEXT_SHOW_MEASUREMENT_CZ  "Ukazat merení­"
+#define UI_TEXT_SHOW_MEASUREMENT_CZ  "Ukazat merenÃ­Â­"
 #define UI_TEXT_RESET_MEASUREMENT_CZ "Obnovit mereni"
 #define UI_TEXT_SET_MEASURED_ORIGIN_CZ "Set Z=0"
 #define UI_TEXT_ZCALIB_CZ             "Z kalib."
@@ -3367,7 +3394,7 @@
 #define UI_TEXT_AUTOLEVEL_ONOFF_CZ  "Autolevel: %ll"
 #define UI_TEXT_SERVOPOS_CZ "Servo pozice: %oS"
 #define UI_TEXT_IGNORE_M106_CZ      "Ignorovat M106 %Fi"
-#define UI_TEXT_WIZ_REHEAT1_CZ "Klikněte ohrat"
+#define UI_TEXT_WIZ_REHEAT1_CZ "KliknÄ›te ohrat"
 #define UI_TEXT_WIZ_REHEAT2_CZ "extruders."
 #define UI_TEXT_WIZ_WAITTEMP1_CZ "Pockejte na cilove"
 #define UI_TEXT_WIZ_WAITTEMP2_CZ "teploty ..."
@@ -3485,6 +3512,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_CZ "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_CZ "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_CZ "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_CZ     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_CZ     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_CZ     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // *************** Polish translation ****************
 // ***************       By MIS       ****************
@@ -3707,7 +3737,7 @@
 #define UI_TEXT_AUTOLEVEL_ONOFF_PL  "Autopoziomow.: %ll"
 #define UI_TEXT_SERVOPOS_PL         "Pozycja Serwa: %oS"
 #define UI_TEXT_IGNORE_M106_PL      "Ignoruj kom. M106 %Fi"
-#define UI_TEXT_WIZ_REHEAT1_PL "Kliknij aby znów"
+#define UI_TEXT_WIZ_REHEAT1_PL "Kliknij aby znÃ³w"
 #define UI_TEXT_WIZ_REHEAT2_PL "rozgrzac ekstrudery"
 #define UI_TEXT_WIZ_WAITTEMP1_PL "Poczekaj na zadane"
 #define UI_TEXT_WIZ_WAITTEMP2_PL "temperatury ..."
@@ -3824,6 +3854,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_PL "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_PL "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_PL "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_PL     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_PL     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_PL     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // Türk
 
@@ -4160,6 +4193,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_TR "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_TR "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_TR "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_TR     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_TR     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_TR     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 // *************** Finnish translation ****************
 // ********** By Matti Granstedt 28.01.2016 ***********
@@ -4394,7 +4430,7 @@
 #define UI_TEXT_BUILDTAK_FI "BuildTak"
 #define UI_TEXT_KAPTON_FI "Kapton"
 #define UI_TEXT_BLUETAPE_FI "Sininen paperi teippi"
-#define UI_TEXT_PETTAPE_FI "Vihreä PET teippi"
+#define UI_TEXT_PETTAPE_FI "VihreÃ¤ PET teippi"
 #define UI_TEXT_GLUESTICK_FI "Liimapuikko"
 #define UI_TEXT_CUSTOM_FI "Mukautettu"
 #define UI_TEXT_COATING_CUSTOM_FI "Mukautettu:%BCmm"
@@ -4499,6 +4535,9 @@
 #define UI_TEXT_MAINPAGE6_4_L_FI "Mul: %om%%%    Las:%op W"
 #define UI_TEXT_MAINPAGE6_4_C_FI "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_FI "%ej Jam Control"
+#define UI_TEXT_PAGE_EXTRUDER4_FI     "E4:%e3/%E3" cDEG "C" cARROW "%o3"
+#define UI_TEXT_PAGE_EXTRUDER5_FI     "E5:%e4/%E4" cDEG "C" cARROW "%o4"
+#define UI_TEXT_PAGE_EXTRUDER6_FI     "E6:%e5/%E5" cDEG "C" cARROW "%o5"
 
 #define TRANS(x) UI_STRING(F ## x,x)
 #ifdef CUSTOM_TRANSLATIONS
