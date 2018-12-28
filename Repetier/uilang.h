@@ -1393,8 +1393,8 @@
 #define UI_TEXT_EXTR5_SELECT_NL "%X5 Select Extr. 6"
 #define UI_TEXT_DITTO_0_NL "%D0 Geen Kopieen"
 #define UI_TEXT_DITTO_1_NL "%D1 1 Kopie"
-#define UI_TEXT_DITTO_2_NL "%D2 2 KopieÃ«n"
-#define UI_TEXT_DITTO_3_NL "%D3 3 KopieÃ«n"
+#define UI_TEXT_DITTO_2_NL "%D2 2 Kopieën"
+#define UI_TEXT_DITTO_3_NL "%D3 3 Kopieën"
 #define UI_TEXT_ZPROBE_HEIGHT_NL "Z-probe hoogte:%zh"
 
 #define UI_TEXT_OFFSETS_NL "Set print offsets"
@@ -1453,7 +1453,7 @@
 #define UI_TEXT_OFF_PT              "Off"
 #define UI_TEXT_NA_PT               "N/A" // Output for not available
 #define UI_TEXT_YES_PT              "Sim"
-#define UI_TEXT_NO_PT               "NÃ£o"
+#define UI_TEXT_NO_PT               "Não"
 #define UI_TEXT_SEL_PT              cSEL
 #define UI_TEXT_NOSEL_PT            cUNSEL
 #define UI_TEXT_PRINT_POS_PT        "Imprimindo..."
@@ -3825,7 +3825,7 @@
 #define UI_TEXT_MAINPAGE6_4_C_PL "Mul: %om%%%    Spi:%opRPM "
 #define UI_TEXT_JAMCONTROL_PL "%ej Jam Control"
 
-// TÃ¼rk
+// Türk
 
 #define UI_TEXT_ON_TR               "Acik"
 #define UI_TEXT_OFF_TR              "Kapali"
@@ -4100,12 +4100,12 @@
 #define UI_TEXT_EXTR3_TEMP_TR       "Sic. 4 : %E3" cDEG "C"
 #define UI_TEXT_EXTR4_TEMP_TR       "Sic. 5 : %E4" cDEG "C"
 #define UI_TEXT_EXTR5_TEMP_TR       "Sic. 6 : %E5" cDEG "C"
-#define UI_TEXT_EXTR3_OFF_TR "Ext. 4â€™u kapat"
-#define UI_TEXT_EXTR4_OFF_TR " Ext. 5â€™i kapat "
-#define UI_TEXT_EXTR5_OFF_TR " Ext. 6â€™yi kapat "
-#define UI_TEXT_EXTR3_SELECT_TR "%X3 Ext. 4â€™u sec "
-#define UI_TEXT_EXTR4_SELECT_TR "%X4 Ext. 5â€™i sec "
-#define UI_TEXT_EXTR5_SELECT_TR "%X5 Ext. 6â€™yi sec "
+#define UI_TEXT_EXTR3_OFF_TR "Ext. 4'u kapat"
+#define UI_TEXT_EXTR4_OFF_TR " Ext. 5'i kapat "
+#define UI_TEXT_EXTR5_OFF_TR " Ext. 6'yi kapat "
+#define UI_TEXT_EXTR3_SELECT_TR "%X3 Ext. 4'u sec "
+#define UI_TEXT_EXTR4_SELECT_TR "%X4 Ext. 5'i sec "
+#define UI_TEXT_EXTR5_SELECT_TR "%X5 Ext. 6'yi sec "
 #define UI_TEXT_DITTO_0_TR "%D0 Kopyalama"
 #define UI_TEXT_DITTO_1_TR "%D1 1 kopya"
 #define UI_TEXT_DITTO_2_TR "%D2 2 kopya"
@@ -4394,7 +4394,7 @@
 #define UI_TEXT_BUILDTAK_FI "BuildTak"
 #define UI_TEXT_KAPTON_FI "Kapton"
 #define UI_TEXT_BLUETAPE_FI "Sininen paperi teippi"
-#define UI_TEXT_PETTAPE_FI "VihreÃ¤ PET teippi"
+#define UI_TEXT_PETTAPE_FI "Vihreä PET teippi"
 #define UI_TEXT_GLUESTICK_FI "Liimapuikko"
 #define UI_TEXT_CUSTOM_FI "Mukautettu"
 #define UI_TEXT_COATING_CUSTOM_FI "Mukautettu:%BCmm"

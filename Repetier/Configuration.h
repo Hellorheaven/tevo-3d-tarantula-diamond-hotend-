@@ -87,7 +87,7 @@
 #define EXT0_X_OFFSET 0
 #define EXT0_Y_OFFSET 0
 #define EXT0_Z_OFFSET 0
-#define EXT0_STEPS_PER_MM 370
+#define EXT0_STEPS_PER_MM 376.14
 #define EXT0_TEMPSENSOR_TYPE 1
 #define EXT0_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT0_HEATER_PIN HEATER_0_PIN
@@ -128,7 +128,7 @@
 #define EXT1_X_OFFSET 0
 #define EXT1_Y_OFFSET 0
 #define EXT1_Z_OFFSET 0
-#define EXT1_STEPS_PER_MM 370
+#define EXT1_STEPS_PER_MM 376.14
 #define EXT1_TEMPSENSOR_TYPE 1
 #define EXT1_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT1_HEATER_PIN HEATER_0_PIN
@@ -169,7 +169,7 @@
 #define EXT2_X_OFFSET 0
 #define EXT2_Y_OFFSET 0
 #define EXT2_Z_OFFSET 0
-#define EXT2_STEPS_PER_MM 370
+#define EXT2_STEPS_PER_MM 376.14
 #define EXT2_TEMPSENSOR_TYPE 1
 #define EXT2_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT2_HEATER_PIN HEATER_0_PIN
@@ -210,7 +210,7 @@
 #define EXT3_X_OFFSET 0
 #define EXT3_Y_OFFSET 0
 #define EXT3_Z_OFFSET 0
-#define EXT3_STEPS_PER_MM 370
+#define EXT3_STEPS_PER_MM 376.14
 #define EXT3_TEMPSENSOR_TYPE 1
 #define EXT3_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT3_HEATER_PIN HEATER_0_PIN
@@ -251,7 +251,7 @@
 #define EXT4_X_OFFSET 0
 #define EXT4_Y_OFFSET 0
 #define EXT4_Z_OFFSET 0
-#define EXT4_STEPS_PER_MM 370
+#define EXT4_STEPS_PER_MM 376.14
 #define EXT4_TEMPSENSOR_TYPE 1
 #define EXT4_TEMPSENSOR_PIN TEMP_0_PIN
 #define EXT4_HEATER_PIN HEATER_0_PIN
@@ -820,7 +820,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 370,
+            "stepsPerMM": 376.14,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -874,7 +874,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 370,
+            "stepsPerMM": 376.14,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -928,7 +928,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 370,
+            "stepsPerMM": 376.14,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -982,7 +982,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 370,
+            "stepsPerMM": 376.14,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
@@ -1036,7 +1036,7 @@ Values must be in range 1..255
             "waitRetractTemp": 150,
             "waitRetractUnits": 0,
             "waitRetract": 0,
-            "stepsPerMM": 370,
+            "stepsPerMM": 376.14,
             "coolerPin": -1,
             "coolerSpeed": 255,
             "selectCommands": "",
