@@ -495,6 +495,7 @@ It also can add a delay to wait for spindle to run on full speed.
 #define INVERT_Z2_DIR 0
 #define INVERT_Z3_DIR 0
 #define INVERT_Z4_DIR 0
+#define INVERT_Z5_DIR 0
 #define X_HOME_DIR -1
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR -1
@@ -602,6 +603,10 @@ It also can add a delay to wait for spindle to run on full speed.
 #define Z4_STEP_PIN   ORIG_E3_STEP_PIN
 #define Z4_DIR_PIN    ORIG_E3_DIR_PIN
 #define Z4_ENABLE_PIN ORIG_E3_ENABLE_PIN
+#define FEATURE_FIVE_ZSTEPPER 0
+#define Z5_STEP_PIN   ORIG_E4_STEP_PIN
+#define Z5_DIR_PIN    ORIG_E4_DIR_PIN
+#define Z5_ENABLE_PIN ORIG_E4_ENABLE_PIN
 #define FEATURE_DITTO_PRINTING 0
 #define USE_ADVANCE 0
 #define ENABLE_QUADRATIC_ADVANCE 0
