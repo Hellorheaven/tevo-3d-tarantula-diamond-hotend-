@@ -33,6 +33,10 @@ float Printer::homingFeedrate[Z_AXIS_ARRAY] = {HOMING_FEEDRATE_X, HOMING_FEEDRAT
 float Printer::axisX1StepsPerMM = XAXIS_STEPS_PER_MM;
 float Printer::axisX2StepsPerMM = X2AXIS_STEPS_PER_MM;
 #endif
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+float Printer::x1Length;
+float Printer::x1Min;
+#endif	
 #if RAMP_ACCELERATION
 //  float max_start_speed_units_per_second[E_AXIS_ARRAY] = MAX_START_SPEED_UNITS_PER_SECOND; ///< Speed we can use, without acceleration.
 float Printer::maxAccelerationMMPerSquareSecond[E_AXIS_ARRAY] = {MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X, MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y, MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z and E max acceleration in mm/s^2 for printing moves or retracts
@@ -58,7 +62,9 @@ uint8_t Printer::relativeCoordinateMode = false;  ///< Determines absolute (fals
 uint8_t Printer::relativeExtruderCoordinateMode = false;  ///< Determines Absolute or Relative E Codes while in Absolute Coordinates mode. E is always relative in Relative Coordinates mode.
 
 long Printer::currentPositionSteps[E_AXIS_ARRAY];
-float Printer::currentPosition[Z_AXIS_ARRAY];
+float Printer::currentPosition[E_AXIS_ARRAY];
+float Printer::destinationPositionTransformed[E_AXIS_ARRAY];
+float Printer::currentPositionTransformed[E_AXIS_ARRAY];
 float Printer::lastCmdPos[Z_AXIS_ARRAY];
 long Printer::destinationSteps[E_AXIS_ARRAY];
 float Printer::coordinateOffset[Z_AXIS_ARRAY] = {0, 0, 0};
@@ -74,6 +80,7 @@ uint8_t Printer::fanSpeed = 0; // Last fan speed set with M106/M107
 float Printer::extrudeMultiplyError = 0;
 float Printer::extrusionFactor = 1.0;
 uint8_t Printer::interruptEvent = 0;
+fast8_t Printer::breakLongCommand = false;
 int Printer::currentLayer = 0;
 int Printer::maxLayer = -1; // -1 = unknown
 char Printer::printName[21] = ""; // max. 20 chars + 0
@@ -193,6 +200,9 @@ fast8_t Printer::multiYHomeFlags;  // 1 = move Y0, 2 = move Y1
 #if MULTI_ZENDSTOP_HOMING
 fast8_t Printer::multiZHomeFlags;  // 1 = move Z0, 2 = move Z1
 #endif
+#if CASE_LIGHTS_PIN > -1
+fast8_t Printer::lightOn;
+#endif
 #ifdef DEBUG_PRINT
 int debugWaitLoop = 0;
 #endif
@@ -220,12 +230,6 @@ TMC2130Stepper* Printer::tmc_driver_e1 = NULL;
 #endif
 #if TMC2130_ON_EXT2
 TMC2130Stepper* Printer::tmc_driver_e2 = NULL;
-#endif
-#if TMC2130_ON_EXT3
-TMC2130Stepper* Printer::tmc_driver_e3 = NULL;
-#endif
-#if TMC2130_ON_EXT4
-TMC2130Stepper* Printer::tmc_driver_e4 = NULL;
 #endif
 #endif
 
@@ -628,16 +632,25 @@ void Printer::moveToParkPosition() {
 
 // This is for untransformed move to coordinates in printers absolute Cartesian space
 uint8_t Printer::moveTo(float x, float y, float z, float e, float f) {
-    if(x != IGNORE_COORDINATE)
-        destinationSteps[X_AXIS] = (x + Printer::offsetX) * axisStepsPerMM[X_AXIS];
-    if(y != IGNORE_COORDINATE)
-        destinationSteps[Y_AXIS] = (y + Printer::offsetY) * axisStepsPerMM[Y_AXIS];
-    if(z != IGNORE_COORDINATE)
-        destinationSteps[Z_AXIS] = (z + Printer::offsetZ) * axisStepsPerMM[Z_AXIS];
-    if(e != IGNORE_COORDINATE)
+    if(x != IGNORE_COORDINATE) {
+		destinationPositionTransformed[X_AXIS] = (x + Printer::offsetX);
+        destinationSteps[X_AXIS] = destinationPositionTransformed[X_AXIS] * axisStepsPerMM[X_AXIS];
+	}
+    if(y != IGNORE_COORDINATE) {
+		destinationPositionTransformed[Y_AXIS] = (y + Printer::offsetY);
+        destinationSteps[Y_AXIS] = destinationPositionTransformed[Y_AXIS] * axisStepsPerMM[Y_AXIS];
+	}
+    if(z != IGNORE_COORDINATE) {
+		destinationPositionTransformed[Z_AXIS] = (z + Printer::offsetZ);
+        destinationSteps[Z_AXIS] = destinationPositionTransformed[Z_AXIS] * axisStepsPerMM[Z_AXIS];
+	}
+    if(e != IGNORE_COORDINATE) {
+		destinationPositionTransformed[E_AXIS] = e;
         destinationSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
-	else
+	} else {
+		destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS];
 		destinationSteps[E_AXIS] = currentPositionSteps[E_AXIS];
+	}
     if(f != IGNORE_COORDINATE)
         feedrate = f;
 #if NONLINEAR_SYSTEM
@@ -649,40 +662,42 @@ uint8_t Printer::moveTo(float x, float y, float z, float e, float f) {
 #else
     PrintLine::queueCartesianMove(ALWAYS_CHECK_ENDSTOPS, true);
 #endif
-    updateCurrentPosition(false);
+	updateCurrentPosition(false);
     return 1;
 }
 
 uint8_t Printer::moveToReal(float x, float y, float z, float e, float f, bool pathOptimize) {
+	// Com::printFLN(PSTR("MoveToReal X="),x,2);
+	// Com::printArrayFLN(PSTR("CurPos:"), currentPositionTransformed);
     if(x == IGNORE_COORDINATE)
         x = currentPosition[X_AXIS];
-    else
-        currentPosition[X_AXIS] = x;
+	currentPosition[X_AXIS] = x;
     if(y == IGNORE_COORDINATE)
         y = currentPosition[Y_AXIS];
-    else
-        currentPosition[Y_AXIS] = y;
+	currentPosition[Y_AXIS] = y;
     if(z == IGNORE_COORDINATE)
         z = currentPosition[Z_AXIS];
-    else
-        currentPosition[Z_AXIS] = z;
-    transformToPrinter(x + Printer::offsetX, y + Printer::offsetY, z + Printer::offsetZ, x, y, z);
-    z += offsetZ2;
+	currentPosition[Z_AXIS] = z;
+    transformToPrinter(x + Printer::offsetX, y + Printer::offsetY, z + Printer::offsetZ, destinationPositionTransformed[X_AXIS], destinationPositionTransformed[Y_AXIS], destinationPositionTransformed[Z_AXIS]);
+    destinationPositionTransformed[Z_AXIS] += offsetZ2;
     // There was conflicting use of IGNOR_COORDINATE
-    destinationSteps[X_AXIS] = static_cast<int32_t>(floor(x * axisStepsPerMM[X_AXIS] + 0.5f));
-    destinationSteps[Y_AXIS] = static_cast<int32_t>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5f));
-    destinationSteps[Z_AXIS] = static_cast<int32_t>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5f));
+    destinationSteps[X_AXIS] = lroundf(destinationPositionTransformed[X_AXIS] * axisStepsPerMM[X_AXIS]);
+    destinationSteps[Y_AXIS] = lroundf(destinationPositionTransformed[Y_AXIS] * axisStepsPerMM[Y_AXIS]);
+    destinationSteps[Z_AXIS] = lroundf(destinationPositionTransformed[Z_AXIS] * axisStepsPerMM[Z_AXIS]);
     if(e != IGNORE_COORDINATE && !Printer::debugDryrun()
 #if MIN_EXTRUDER_TEMP > 30
             && (Extruder::current->tempControl.currentTemperatureC > MIN_EXTRUDER_TEMP || Printer::isColdExtrusionAllowed() || Extruder::current->tempControl.sensorType == 0)
 #endif
       ) {
+		destinationPositionTransformed[E_AXIS] = e;
         destinationSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
     } else {
+		destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS];
 		destinationSteps[E_AXIS] = currentPositionSteps[E_AXIS];
 	}
     if(f != IGNORE_COORDINATE)
         feedrate = f;
+	// Com::printArrayFLN(PSTR("DestPos:"), destinationPositionTransformed);
 
 #if NONLINEAR_SYSTEM
     if (!PrintLine::queueNonlinearMove(ALWAYS_CHECK_ENDSTOPS, pathOptimize, true)) {
@@ -708,17 +723,18 @@ void Printer::setOrigin(float xOff, float yOff, float zOff) {
 void Printer::updateCurrentPosition(bool copyLastCmd) {
 #if DUAL_X_AXIS && LAZY_DUAL_X_AXIS
     if(!sledParked)
-        currentPosition[X_AXIS] = static_cast<float>(currentPositionSteps[X_AXIS]) * invAxisStepsPerMM[X_AXIS];
+        currentPositionTransformed[X_AXIS] = static_cast<float>(currentPositionSteps[X_AXIS]) * invAxisStepsPerMM[X_AXIS];
 #else
-    currentPosition[X_AXIS] = static_cast<float>(currentPositionSteps[X_AXIS]) * invAxisStepsPerMM[X_AXIS];
+    currentPositionTransformed[X_AXIS] = static_cast<float>(currentPositionSteps[X_AXIS]) * invAxisStepsPerMM[X_AXIS];
 #endif
-    currentPosition[Y_AXIS] = static_cast<float>(currentPositionSteps[Y_AXIS]) * invAxisStepsPerMM[Y_AXIS];
+    currentPositionTransformed[Y_AXIS] = static_cast<float>(currentPositionSteps[Y_AXIS]) * invAxisStepsPerMM[Y_AXIS];
 #if NONLINEAR_SYSTEM
-    currentPosition[Z_AXIS] = static_cast<float>(currentPositionSteps[Z_AXIS]) * invAxisStepsPerMM[Z_AXIS] - offsetZ2;
+    currentPositionTransformed[Z_AXIS] = static_cast<float>(currentPositionSteps[Z_AXIS]) * invAxisStepsPerMM[Z_AXIS] - offsetZ2;
 #else
-    currentPosition[Z_AXIS] = static_cast<float>(currentPositionSteps[Z_AXIS] - zCorrectionStepsIncluded) * invAxisStepsPerMM[Z_AXIS] - offsetZ2;
+    currentPositionTransformed[Z_AXIS] = static_cast<float>(currentPositionSteps[Z_AXIS] - zCorrectionStepsIncluded) * invAxisStepsPerMM[Z_AXIS] - offsetZ2;
 #endif
-    transformFromPrinter(currentPosition[X_AXIS], currentPosition[Y_AXIS], currentPosition[Z_AXIS],
+	// currentPosition[E_AXIS] = currentPositionSteps[E_AXIS] * invAxisStepsPerMM[E_AXIS];
+    transformFromPrinter(currentPositionTransformed[X_AXIS], currentPositionTransformed[Y_AXIS], currentPositionTransformed[Z_AXIS],
                          currentPosition[X_AXIS], currentPosition[Y_AXIS], currentPosition[Z_AXIS]);
     currentPosition[X_AXIS] -= Printer::offsetX; // Offset from active extruder or z probe
     currentPosition[Y_AXIS] -= Printer::offsetY;
@@ -734,9 +750,10 @@ void Printer::updateCurrentPositionSteps() {
     float x_rotc, y_rotc, z_rotc;
     transformToPrinter(currentPosition[X_AXIS] + Printer::offsetX, currentPosition[Y_AXIS] + Printer::offsetY, currentPosition[Z_AXIS] +  Printer::offsetZ, x_rotc, y_rotc, z_rotc);
     z_rotc += offsetZ2;
-    currentPositionSteps[X_AXIS] = static_cast<int32_t>(floor(x_rotc * axisStepsPerMM[X_AXIS] + 0.5f));
-    currentPositionSteps[Y_AXIS] = static_cast<int32_t>(floor(y_rotc * axisStepsPerMM[Y_AXIS] + 0.5f));
-    currentPositionSteps[Z_AXIS] = static_cast<int32_t>(floor(z_rotc * axisStepsPerMM[Z_AXIS] + 0.5f));
+    currentPositionSteps[X_AXIS] = lroundf(x_rotc * axisStepsPerMM[X_AXIS]);
+    currentPositionSteps[Y_AXIS] = lroundf(y_rotc * axisStepsPerMM[Y_AXIS]);
+    currentPositionSteps[Z_AXIS] = lroundf(z_rotc * axisStepsPerMM[Z_AXIS]);
+	currentPositionSteps[E_AXIS] = lroundf(currentPosition[E_AXIS] * axisStepsPerMM[E_AXIS]);
 #if NONLINEAR_SYSTEM
     transformCartesianStepsToDeltaSteps(Printer::currentPositionSteps, Printer::currentNonlinearPositionSteps);
 #endif
@@ -788,19 +805,19 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com) {
     if(!com->hasNoXYZ()) {
 #endif
         if(!relativeCoordinateMode) {
-            if(com->hasX()) lastCmdPos[X_AXIS] = currentPosition[X_AXIS] = convertToMM(com->X) - coordinateOffset[X_AXIS];
-            if(com->hasY()) lastCmdPos[Y_AXIS] = currentPosition[Y_AXIS] = convertToMM(com->Y) - coordinateOffset[Y_AXIS];
-            if(com->hasZ()) lastCmdPos[Z_AXIS] = currentPosition[Z_AXIS] = convertToMM(com->Z) - coordinateOffset[Z_AXIS];
+            if(com->hasX()) currentPosition[X_AXIS] = lastCmdPos[X_AXIS] = convertToMM(com->X) - coordinateOffset[X_AXIS];
+            if(com->hasY()) currentPosition[Y_AXIS] = lastCmdPos[Y_AXIS] = convertToMM(com->Y) - coordinateOffset[Y_AXIS];
+            if(com->hasZ()) currentPosition[Z_AXIS] = lastCmdPos[Z_AXIS] = convertToMM(com->Z) - coordinateOffset[Z_AXIS];
         } else {
             if(com->hasX()) currentPosition[X_AXIS] = (lastCmdPos[X_AXIS] += convertToMM(com->X));
             if(com->hasY()) currentPosition[Y_AXIS] = (lastCmdPos[Y_AXIS] += convertToMM(com->Y));
             if(com->hasZ()) currentPosition[Z_AXIS] = (lastCmdPos[Z_AXIS] += convertToMM(com->Z));
         }
-        transformToPrinter(lastCmdPos[X_AXIS] + Printer::offsetX, lastCmdPos[Y_AXIS] + Printer::offsetY, lastCmdPos[Z_AXIS] +  Printer::offsetZ, x, y, z);
-        z += offsetZ2;
-        destinationSteps[X_AXIS] = static_cast<int32_t>(floor(x * axisStepsPerMM[X_AXIS] + 0.5f));
-        destinationSteps[Y_AXIS] = static_cast<int32_t>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5f));
-        destinationSteps[Z_AXIS] = static_cast<int32_t>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5f));
+        transformToPrinter(lastCmdPos[X_AXIS] + Printer::offsetX, lastCmdPos[Y_AXIS] + Printer::offsetY, lastCmdPos[Z_AXIS] +  Printer::offsetZ, destinationPositionTransformed[X_AXIS], destinationPositionTransformed[Y_AXIS], destinationPositionTransformed[Z_AXIS]);
+        destinationPositionTransformed[Z_AXIS] += offsetZ2;
+        destinationSteps[X_AXIS] = lroundf(destinationPositionTransformed[X_AXIS] * axisStepsPerMM[X_AXIS]);
+        destinationSteps[Y_AXIS] = lroundf(destinationPositionTransformed[Y_AXIS] * axisStepsPerMM[Y_AXIS]);
+        destinationSteps[Z_AXIS] = lroundf(destinationPositionTransformed[Z_AXIS] * axisStepsPerMM[Z_AXIS]);
 #if LAZY_DUAL_X_AXIS
         sledParked = false;
 #endif
@@ -822,19 +839,33 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com) {
 #if MIN_EXTRUDER_TEMP > 20
                 (Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP && !Printer::isColdExtrusionAllowed() && Extruder::current->tempControl.sensorType != 0) ||
 #endif
-                fabs(com->E) * extrusionFactor > EXTRUDE_MAXLENGTH)
-                p = 0;
-            destinationSteps[E_AXIS] = currentPositionSteps[E_AXIS] + p;
+                fabs(com->E) * extrusionFactor > EXTRUDE_MAXLENGTH) {
+					p = 0;
+					destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS] = 0;
+				} else {
+					destinationPositionTransformed[E_AXIS] = 0;
+					currentPositionTransformed[E_AXIS] = -convertToMM(com->E);
+				}
+			
+            destinationSteps[E_AXIS] = 0;
+			currentPositionSteps[E_AXIS] = -p;
         } else {
             if(
 #if MIN_EXTRUDER_TEMP > 20
                 (Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP  && !Printer::isColdExtrusionAllowed() && Extruder::current->tempControl.sensorType != 0) ||
 #endif
-                fabs(p - currentPositionSteps[E_AXIS]) * extrusionFactor > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
+                fabs(p - currentPositionSteps[E_AXIS]) * extrusionFactor > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS]) {
                 currentPositionSteps[E_AXIS] = p;
+					destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS] = convertToMM(com->E);
+				} else {
+					destinationPositionTransformed[E_AXIS] = convertToMM(com->E);
+				}
             destinationSteps[E_AXIS] = p;
         }
-    } else Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS];
+    } else {
+		destinationPositionTransformed[E_AXIS] = currentPositionTransformed[E_AXIS];
+		Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS];
+	}
     if(com->hasF() && com->F > 0.1) {
         if(unitIsInches)
             feedrate = com->F * 0.0042333f * (float)feedrateMultiply;  // Factor is 25.5/60/100
@@ -994,15 +1025,6 @@ void Printer::setup() {
 #endif
 #endif
 
-#if FEATURE_FIVE_ZSTEPPER
-    SET_OUTPUT(Z5_STEP_PIN);
-    SET_OUTPUT(Z5_DIR_PIN);
-#if Z5_ENABLE_PIN > -1
-    SET_OUTPUT(Z5_ENABLE_PIN);
-    WRITE(Z5_ENABLE_PIN, !Z_ENABLE_ON);
-#endif
-#endif
-
 #if defined(DOOR_PIN) && DOOR_PIN > -1
     SET_INPUT(DOOR_PIN);
 #if defined(DOOR_PULLUP) && DOOR_PULLUP
@@ -1129,6 +1151,7 @@ void Printer::setup() {
 #if CASE_LIGHTS_PIN >= 0
     SET_OUTPUT(CASE_LIGHTS_PIN);
     WRITE(CASE_LIGHTS_PIN, CASE_LIGHT_DEFAULT_ON);
+	lightOn = CASE_LIGHT_DEFAULT_ON;
 #endif // CASE_LIGHTS_PIN
 #if defined(UI_VOLTAGE_LEVEL) && defined(EXP_VOLTAGE_LEVEL_PIN) && EXP_VOLTAGE_LEVEL_PIN >-1
     SET_OUTPUT(EXP_VOLTAGE_LEVEL_PIN);
@@ -1183,16 +1206,6 @@ void Printer::setup() {
     configTMC2130(Printer::tmc_driver_e2, TMC2130_STEALTHCHOP_EXT2, TMC2130_STALLGUARD_EXT2,
     TMC2130_PWM_AMPL_EXT2, TMC2130_PWM_GRAD_EXT2, TMC2130_PWM_AUTOSCALE_EXT2, TMC2130_PWM_FREQ_EXT2);
 #endif
-#if TMC2130_ON_EXT3 > 0
-    Printer::tmc_driver_e3 = new TMC2130Stepper(EXT3_ENABLE_PIN, EXT3_DIR_PIN, EXT3_STEP_PIN, TMC2130_EXT3_CS_PIN);
-    configTMC2130(Printer::tmc_driver_e3, TMC2130_STEALTHCHOP_EXT3, TMC2130_STALLGUARD_EXT3,
-    TMC2130_PWM_AMPL_EXT3, TMC2130_PWM_GRAD_EXT3, TMC2130_PWM_AUTOSCALE_EXT3, TMC2130_PWM_FREQ_EXT3);
-#endif
-#if TMC2130_ON_EXT4 > 0
-    Printer::tmc_driver_e4 = new TMC2130Stepper(EXT4_ENABLE_PIN, EXT4_DIR_PIN, EXT4_STEP_PIN, TMC2130_EXT4_CS_PIN);
-    configTMC2130(Printer::tmc_driver_e4, TMC2130_STEALTHCHOP_EXT4, TMC2130_STALLGUARD_EXT4,
-    TMC2130_PWM_AMPL_EXT4, TMC2130_PWM_GRAD_EXT4, TMC2130_PWM_AUTOSCALE_EXT4, TMC2130_PWM_FREQ_EXT4);
-#endif
 #endif // DRV_TMC2130
 #if STEPPER_CURRENT_CONTROL != CURRENT_CONTROL_MANUAL
     motorCurrentControlInit(); // Set current if it is firmware controlled
@@ -1230,6 +1243,10 @@ void Printer::setup() {
     xMin = X_MIN_POS;
     yMin = Y_MIN_POS;
     zMin = Z_MIN_POS;
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+    x1Min = xMin;
+    x1Length = xLength;
+#endif
 #if DRIVE_SYSTEM == DELTA
     radius0 = ROD_RADIUS;
 #endif
@@ -1602,9 +1619,16 @@ void Printer::homeXAxis() {
     sledParked = true;
     currentPosition[X_AXIS] = lastCmdPos[X_AXIS] = xMin;
 #else
-    // Now position current extrude on x = 0
-    PrintLine::moveRelativeDistanceInSteps(-Extruder::current->xOffset, 0, 0, 0, homingFeedrate[X_AXIS], true, true);
-    currentPositionSteps[X_AXIS] = xMinSteps;
+    #if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+        if (Extruder::current->isLeftCarriage()) //left carriage
+            currentPositionSteps[X_AXIS] = xMinSteps;
+        else
+            currentPositionSteps[X_AXIS] = Extruder::current->xOffset;
+    #else
+        // Now position current extrude on x = 0
+        PrintLine::moveRelativeDistanceInSteps(-Extruder::current->xOffset, 0, 0, 0, homingFeedrate[X_AXIS], true, true);
+        currentPositionSteps[X_AXIS] = xMinSteps;
+    #endif
 #endif  // LAZY_DUAL_X_AXIS
     updateCurrentPosition(false);
     offsetX = 0;
@@ -1794,7 +1818,9 @@ void Printer::homeZAxis() { // Cartesian homing
     if ((MIN_HARDWARE_ENDSTOP_Z && Z_MIN_PIN > -1 && Z_HOME_DIR == -1) || (MAX_HARDWARE_ENDSTOP_Z && Z_MAX_PIN > -1 && Z_HOME_DIR == 1)) {
         offsetZ2 = 0;
 #if Z_HOME_DIR < 0 && Z_PROBE_PIN == Z_MIN_PIN && FEATURE_Z_PROBE
-        Printer::startProbing(true);
+        if(!Printer::startProbing(true)) {
+			return;
+		}
 #endif
         coordinateOffset[Z_AXIS] = 0; // G92 Z offset
         UI_STATUS_UPD_F(Com::translatedF(UI_TEXT_HOME_Z_ID));
@@ -2139,13 +2165,14 @@ void Printer::zBabystep() {
 void Printer::setCaseLight(bool on) {
 #if CASE_LIGHTS_PIN > -1
     WRITE(CASE_LIGHTS_PIN, on);
+	lightOn = on;
     reportCaseLightStatus();
 #endif
 }
 
 void Printer::reportCaseLightStatus() {
 #if CASE_LIGHTS_PIN > -1
-    if(READ(CASE_LIGHTS_PIN))
+    if(lightOn)
         Com::printInfoFLN(PSTR("Case lights on"));
     else
         Com::printInfoFLN(PSTR("Case lights off"));
@@ -2651,7 +2678,9 @@ void Printer::continuePrint() {
 }
 
 void Printer::stopPrint() {
+#if NEW_COMMUNICATION
     flashSource.close(); // stop flash printing if busy
+#endif
 #if SDSUPPORT
     if(Printer::isMenuMode(MENU_MODE_SD_PRINTING)) {
         sd.stopPrint();
@@ -2668,9 +2697,13 @@ void Printer::stopPrint() {
 #if defined(DRV_TMC2130)
     void Printer::configTMC2130(TMC2130Stepper* tmc_driver, bool tmc_stealthchop, int8_t tmc_sgt,
       uint8_t tmc_pwm_ampl, uint8_t tmc_pwm_grad, bool tmc_pwm_autoscale, uint8_t tmc_pwm_freq) {
-        while(!tmc_driver->stst());                     // Wait for motor stand-still
         tmc_driver->begin();                            // Initiate pins and registries
-		// Using internal reference should be good enough and work on more drivers
+        tmc_driver->test_connection();
+        if (tmc_driver->test_connection() != 0) {
+	        Printer::kill(false);
+        }
+        TRINAMIC_WAIT_FOR_STANDSTILL(tmc_driver, 100)   // Wait for motor stand-still
+        tmc_driver->I_scale_analog(true);               // Set current reference source		// Using internal reference should be good enough and work on more drivers
         // tmc_driver->I_scale_analog(true);               // Set current reference source
         tmc_driver->interpolate(true);                  // Set internal micro step interpolation
         tmc_driver->pwm_ampl(tmc_pwm_ampl);             // Chopper PWM amplitude

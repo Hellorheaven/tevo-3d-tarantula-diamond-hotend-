@@ -578,7 +578,7 @@ SIGNAL (TIMER3_COMPA_vect) {
 #endif
 #endif
 
-long __attribute__((used)) stepperWait = 0;
+volatile long __attribute__((used)) stepperWait = 0;
 
 // ================== Interrupt handling ======================
 
@@ -1424,3 +1424,4 @@ RFHardwareSerial RFSerial(&rx_buffer, &tx_buffer, &UBRR0H, &UBRR0L, &UCSR0A, &UC
 #endif
 
 #endif
+

@@ -261,6 +261,11 @@ public:
     static float axisX1StepsPerMM;
     static float axisX2StepsPerMM;
 #endif
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+    static float x1Length;
+    static float x1Min;
+#endif
+    	
     static float axisStepsPerMM[]; ///< Resolution of each axis in steps per mm.
     static float invAxisStepsPerMM[]; ///< 1/axisStepsPerMM for faster computation.
     static float maxFeedrate[]; ///< Maximum feedrate in mm/s per axis.
@@ -285,7 +290,9 @@ public:
     static uint32_t stepNumber;         ///< Step number in current move.
     static float coordinateOffset[Z_AXIS_ARRAY];
     static int32_t currentPositionSteps[E_AXIS_ARRAY];     ///< Position in steps from origin.
-    static float currentPosition[Z_AXIS_ARRAY]; ///< Position in global coordinates
+    static float currentPosition[E_AXIS_ARRAY]; ///< Position in global coordinates
+    static float destinationPositionTransformed[E_AXIS_ARRAY]; ///< Target position in transformed coordinates
+    static float currentPositionTransformed[E_AXIS_ARRAY]; ///< Target position in transformed coordinates
     static float lastCmdPos[Z_AXIS_ARRAY]; ///< Last coordinates (global coordinates) send by g-codes
     static int32_t destinationSteps[E_AXIS_ARRAY];         ///< Target position in steps.
     static millis_t lastTempReport;
@@ -387,6 +394,9 @@ public:
 #if MULTI_ZENDSTOP_HOMING || defined(DOXYGEN)
 	static fast8_t multiZHomeFlags;  // 1 = move Z0, 2 = move Z1
 #endif
+#if CASE_LIGHTS_PIN > -1
+	static fast8_t lightOn;
+#endif
     static float memoryX;
     static float memoryY;
     static float memoryZ;
@@ -407,7 +417,8 @@ public:
     static int maxLayer; // -1 = unknown
     static char printName[21]; // max. 20 chars + 0
     static float progress;
-    static fast8_t wizardStackPos;
+    static fast8_t breakLongCommand; // Set by M108 to stop long tasks
+	static fast8_t wizardStackPos;
     static wizardVar wizardStack[WIZARD_STACK_SIZE];
 
 #if defined(DRV_TMC2130)
@@ -428,12 +439,6 @@ public:
 #endif
 #if TMC2130_ON_EXT2
     static TMC2130Stepper* tmc_driver_e2;
-#endif
-#if TMC2130_ON_EXT3
-    static TMC2130Stepper* tmc_driver_e3;
-#endif
-#if TMC2130_ON_EXT4
-    static TMC2130Stepper* tmc_driver_e4;
 #endif
 #endif
 
@@ -544,9 +549,6 @@ public:
 #if FEATURE_FOUR_ZSTEPPER && (Z4_ENABLE_PIN > -1)
         WRITE(Z4_ENABLE_PIN, !Z_ENABLE_ON);
 #endif
-#if FEATURE_FIVE_ZSTEPPER && (Z5_ENABLE_PIN > -1)
-        WRITE(Z5_ENABLE_PIN, !Z_ENABLE_ON);
-#endif
     }
 
     /** \brief Enable stepper motor for x direction. */
@@ -581,9 +583,6 @@ public:
 #endif
 #if FEATURE_FOUR_ZSTEPPER && (Z4_ENABLE_PIN > -1)
         WRITE(Z4_ENABLE_PIN, Z_ENABLE_ON);
-#endif
-#if FEATURE_FIVE_ZSTEPPER && (Z5_ENABLE_PIN > -1)
-        WRITE(Z5_ENABLE_PIN, Z_ENABLE_ON);
 #endif
     }
 
@@ -626,9 +625,6 @@ public:
 #if FEATURE_FOUR_ZSTEPPER
             WRITE(Z4_DIR_PIN, !INVERT_Z4_DIR);
 #endif
-#if FEATURE_FIVE_ZSTEPPER
-            WRITE(Z5_DIR_PIN, !INVERT_Z5_DIR);
-#endif
         } else {
             WRITE(Z_DIR_PIN, INVERT_Z_DIR);
 #if FEATURE_TWO_ZSTEPPER
@@ -639,9 +635,6 @@ public:
 #endif
 #if FEATURE_FOUR_ZSTEPPER
             WRITE(Z4_DIR_PIN, INVERT_Z4_DIR);
-#endif
-#if FEATURE_FIVE_ZSTEPPER
-            WRITE(Z5_DIR_PIN, INVERT_Z5_DIR);
 #endif
         }
     }
@@ -965,9 +958,6 @@ public:
 #if FEATURE_FOUR_ZSTEPPER
             WRITE(Z4_STEP_PIN, START_STEP_WITH_HIGH);
 #endif
-#if FEATURE_FIVE_ZSTEPPER
-            WRITE(Z5_STEP_PIN, START_STEP_WITH_HIGH);
-#endif
             motorYorZ += 2;
         } else if(motorYorZ >= 2) {
             WRITE(Z_STEP_PIN, START_STEP_WITH_HIGH);
@@ -979,9 +969,6 @@ public:
 #endif
 #if FEATURE_FOUR_ZSTEPPER
             WRITE(Z4_STEP_PIN, START_STEP_WITH_HIGH);
-#endif
-#if FEATURE_FIVE_ZSTEPPER
-            WRITE(Z5_STEP_PIN, START_STEP_WITH_HIGH);
 #endif
             motorYorZ -= 2;
         }
@@ -1056,11 +1043,6 @@ public:
             WRITE(Z4_STEP_PIN, START_STEP_WITH_HIGH);
         }
 #endif
-#if FEATURE_FIVE_ZSTEPPER
-        if(Printer::multiZHomeFlags & 8) {
-            WRITE(Z5_STEP_PIN, START_STEP_WITH_HIGH);
-        }
-#endif
 #else
         WRITE(Z_STEP_PIN, START_STEP_WITH_HIGH);
 #if FEATURE_TWO_ZSTEPPER
@@ -1071,9 +1053,6 @@ public:
 #endif
 #if FEATURE_FOUR_ZSTEPPER
         WRITE(Z4_STEP_PIN, START_STEP_WITH_HIGH);
-#endif
-#if FEATURE_FIVE_ZSTEPPER
-        WRITE(Z5_STEP_PIN, START_STEP_WITH_HIGH);
 #endif
 #endif
     }
@@ -1095,9 +1074,6 @@ public:
 #endif
 #if FEATURE_FOUR_ZSTEPPER
         WRITE(Z4_STEP_PIN, !START_STEP_WITH_HIGH);
-#endif
-#if FEATURE_FIVE_ZSTEPPER
-        WRITE(Z5_STEP_PIN, !START_STEP_WITH_HIGH);
 #endif
     }
     static INLINE speed_t updateStepsPerTimerCall(speed_t vbase) {
@@ -1297,6 +1273,14 @@ public:
     static void prepareForProbing();
 #endif
 #if defined(DRV_TMC2130)
+#define TRINAMIC_WAIT_RESOLUTION_uS 100
+/// Wait for boolean 'condition' to become true until 'timeout' (in miliseconds)
+#define WAIT_UNTIL(condition, timeout) \
+for(uint16_t count = 0; !condition || count < ((uint16_t)timeout * (uint16_t)1000 / (uint16_t)TRINAMIC_WAIT_RESOLUTION_uS); count++) { \
+	HAL::delayMicroseconds(TRINAMIC_WAIT_RESOLUTION_uS); \
+}
+/// Wait for driver standstill condition until timeout (in miliseconds)
+#define TRINAMIC_WAIT_FOR_STANDSTILL(driver, timeout) WAIT_UNTIL(driver->stst(), timeout)
     static void configTMC2130(TMC2130Stepper* tmc_driver, bool tmc_stealthchop, int8_t tmc_sgt,
       uint8_t tmc_pwm_ampl, uint8_t tmc_pwm_grad, bool tmc_pwm_autoscale, uint8_t tmc_pwm_freq);
     static void tmcPrepareHoming(TMC2130Stepper* tmc_driver, uint32_t coolstep_sp_min);

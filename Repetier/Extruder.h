@@ -41,8 +41,8 @@ public:
     //int16_t targetTemperature; ///< Target temperature value in units of sensor.
     float currentTemperatureC; ///< Current temperature in degC.
     float targetTemperatureC; ///< Target temperature in degC.
-    float temperatureC; ///< For 1s updates temperature and last build a short time history
-    float lastTemperatureC; ///< Used to compute D errors.
+	float temperatureC; ///< For 1s updates temperature and last build a short time history
+	float lastTemperatureC; ///< Used to compute D errors.
     uint32_t lastTemperatureUpdate; ///< Time in millis of the last temperature update.
     float tempIState; ///< Temp. var. for PID computation.
     uint8_t pidDriveMax; ///< Used for windup in PID calculation.
@@ -62,6 +62,8 @@ public:
     millis_t preheatStartTime;    ///< Time (in milliseconds) when heat up was started
     int16_t preheatTemperature;
 
+	/** Return currentTemperatureC but -333 on defect sensor and -444 on decoupled sensor. */
+	float getStatefulTemperature();
     void setTargetTemperature(float target);
     void updateCurrentTemperature();
     void updateTempControlVars();
@@ -78,9 +80,9 @@ public:
     {
         return flags & TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL;
     }
-    inline void removeErrorStates() {
+	inline void removeErrorStates() {
         flags &= ~(TEMPERATURE_CONTROLLER_FLAG_ALARM | TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT | TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED);
-    }
+	}
     inline bool isDecoupleFullOrHold()
     {
         return flags & (TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL | TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_HOLD);
@@ -126,25 +128,25 @@ public:
     {
         return flags & TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED;
     }
-    static void resetAllErrorStates();
-    fast8_t errorState();
+	static void resetAllErrorStates();
+	fast8_t errorState();
     inline bool isFilamentChange()
     {
-        return flags & TEMPERATURE_CONTROLLER_FLAG_FILAMENTCHANGE;
+	    return flags & TEMPERATURE_CONTROLLER_FLAG_FILAMENTCHANGE;
     }
-    inline bool isJammed()
-    {
-        return flags & TEMPERATURE_CONTROLLER_FLAG_JAM;
-    }
+	inline bool isJammed()
+	{
+		return flags & TEMPERATURE_CONTROLLER_FLAG_JAM;
+	}
     inline bool isSlowedDown()
     {
-        return flags & TEMPERATURE_CONTROLLER_FLAG_SLOWDOWN;
+	    return flags & TEMPERATURE_CONTROLLER_FLAG_SLOWDOWN;
     }
 #if EXTRUDER_JAM_CONTROL
     inline void setFilamentChange(bool on)
     {
-        flags &= ~TEMPERATURE_CONTROLLER_FLAG_FILAMENTCHANGE;
-        if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_FILAMENTCHANGE;
+	    flags &= ~TEMPERATURE_CONTROLLER_FLAG_FILAMENTCHANGE;
+	    if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_FILAMENTCHANGE;
     }
     void setJammed(bool on);
     inline void setSlowedDown(bool on)
@@ -175,38 +177,38 @@ extern Extruder extruder[];
 #if EXTRUDER_JAM_CONTROL
 #if JAM_METHOD == 1
 #define _TEST_EXTRUDER_JAM(x,pin) {\
-    uint8_t sig = READ(pin);extruder[x].jamStepsSinceLastSignal += extruder[x].jamLastDir;\
-    if(extruder[x].jamLastSignal != sig && abs(extruder[x].jamStepsSinceLastSignal - extruder[x].jamLastChangeAt) > JAM_MIN_STEPS) {\
-        if(sig) {extruder[x].resetJamSteps();} \
-        extruder[x].jamLastSignal = sig;extruder[x].jamLastChangeAt = extruder[x].jamStepsSinceLastSignal;\
-    } else if(abs(extruder[x].jamStepsSinceLastSignal) > extruder[x].jamErrorSteps && !Printer::isDebugJamOrDisabled() && !extruder[x].tempControl.isJammed() && !extruder[x].tempControl.isFilamentChange()) {\
-    if(extruder[x].jamLastDir > 0) {\
-    extruder[x].tempControl.setJammed(true);\
-    } else {\
-    extruder[x].tempControl.setFilamentChange(true);}} \
+	uint8_t sig = READ(pin);extruder[x].jamStepsSinceLastSignal += extruder[x].jamLastDir;\
+	if(extruder[x].jamLastSignal != sig && abs(extruder[x].jamStepsSinceLastSignal - extruder[x].jamLastChangeAt) > JAM_MIN_STEPS) {\
+		if(sig) {extruder[x].resetJamSteps();} \
+		extruder[x].jamLastSignal = sig;extruder[x].jamLastChangeAt = extruder[x].jamStepsSinceLastSignal;\
+	} else if(abs(extruder[x].jamStepsSinceLastSignal) > extruder[x].jamErrorSteps && !Printer::isDebugJamOrDisabled() && !extruder[x].tempControl.isJammed() && !extruder[x].tempControl.isFilamentChange()) {\
+	if(extruder[x].jamLastDir > 0) {\
+	extruder[x].tempControl.setJammed(true);\
+	} else {\
+	extruder[x].tempControl.setFilamentChange(true);}} \
 }
 #define RESET_EXTRUDER_JAM(x,dir) extruder[x].jamLastDir = dir ? 1 : -1;
 #elif JAM_METHOD == 2
 #define _TEST_EXTRUDER_JAM(x,pin) {\
         uint8_t sig = READ(pin);\
-          if(sig != extruder[x].jamLastSignal) {\
-              extruder[x].jamLastSignal = sig;\
-              if(sig)\
-                {extruder[x].tempControl.setFilamentChange(true);extruder[x].tempControl.setJammed(true);} \
-              else if(!Printer::isDebugJamOrDisabled() && extruder[x].tempControl.isJammed()) \
-                {extruder[x].resetJamSteps();}}\
-          }
+		  if(sig != extruder[x].jamLastSignal) {\
+			  extruder[x].jamLastSignal = sig;\
+			  if(sig)\
+				{extruder[x].tempControl.setFilamentChange(true);extruder[x].tempControl.setJammed(true);} \
+			  else if(!Printer::isDebugJamOrDisabled() && extruder[x].tempControl.isJammed()) \
+				{extruder[x].resetJamSteps();}}\
+		  }
 #define RESET_EXTRUDER_JAM(x,dir)
 #elif JAM_METHOD == 3
 #define _TEST_EXTRUDER_JAM(x,pin) {\
-    uint8_t sig = !READ(pin);\
-    if(sig != extruder[x].jamLastSignal) {\
-        extruder[x].jamLastSignal = sig;\
-        if(sig)\
-        {extruder[x].tempControl.setFilamentChange(true);extruder[x].tempControl.setJammed(true);} \
-        else if(!Printer::isDebugJamOrDisabled() && extruder[x].tempControl.isJammed()) \
-        {extruder[x].resetJamSteps();}}\
-    }
+	uint8_t sig = !READ(pin);\
+	if(sig != extruder[x].jamLastSignal) {\
+		extruder[x].jamLastSignal = sig;\
+		if(sig)\
+		{extruder[x].tempControl.setFilamentChange(true);extruder[x].tempControl.setJammed(true);} \
+		else if(!Printer::isDebugJamOrDisabled() && extruder[x].tempControl.isJammed()) \
+		{extruder[x].resetJamSteps();}}\
+	}
 #define RESET_EXTRUDER_JAM(x,dir)
 #else
 #error Unknown value for JAM_METHOD
@@ -238,7 +240,7 @@ public:
     static int mixingS; ///< Sum of all weights
     static uint8_t mixingDir; ///< Direction flag
     static uint8_t activeMixingExtruder;
-    static void recomputeMixingExtruderSteps();
+	static void recomputeMixingExtruderSteps();
 #endif
     uint8_t id;
     int32_t xOffset;
@@ -266,7 +268,7 @@ public:
 #endif // USE_ADVANCE
 #if MIXING_EXTRUDER > 0
     int mixingW;   ///< Weight for this extruder when mixing steps
-    int mixingWB;  ///< Weight after balancing extruder steps per mm
+	int mixingWB;  ///< Weight after balancing extruder steps per mm
     int mixingE;   ///< Cumulated error for this step.
     int virtualWeights[VIRTUAL_EXTRUDER]; // Virtual extruder weights
 #endif // MIXING_EXTRUDER > 0
@@ -318,9 +320,14 @@ public:
     void retract(bool isRetract,bool isLong);
     void retractDistance(float dist,bool extraLength = false);
 #endif
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+    inline bool isLeftCarriage() {return ((id == 0 && X_HOME_DIR == -1) || (id == 1 && X_HOME_DIR == 1)) ? true:false;}
+#endif
     static void manageTemperatures();
     static void disableCurrentExtruderMotor();
     static void disableAllExtruderMotors();
+    static void enableCurrentExtruderMotor();
+    static void enableAllExtruderMotors();
     static void selectExtruderById(uint8_t extruderId);
     static void disableAllHeater();
     static void initExtruder();

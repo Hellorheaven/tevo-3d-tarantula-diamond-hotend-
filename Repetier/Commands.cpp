@@ -60,6 +60,9 @@ void Commands::commandLoop() {
 
 void Commands::checkForPeriodicalActions(bool allowNewMoves) {
     Printer::handleInterruptEvent();
+#if EMERGENCY_PARSER
+	GCodeSource::prefetchAll();
+#endif
     EVENT_PERIODICAL;
 #if defined(DOOR_PIN) && DOOR_PIN > -1
     if(Printer::updateDoorOpen()) {
@@ -159,7 +162,7 @@ void Commands::printCurrentPosition() {
 void Commands::printTemperatures(bool showRaw) {
     int error;
 #if NUM_EXTRUDER > 0
-    float temp = Extruder::current->tempControl.currentTemperatureC;
+    float temp = Extruder::current->tempControl.getStatefulTemperature();
 #if HEATED_BED_SENSOR_TYPE == 0
     Com::printF(Com::tTColon, temp);
     Com::printF(Com::tSpaceSlash, Extruder::current->tempControl.targetTemperatureC, 0);
@@ -167,7 +170,7 @@ void Commands::printTemperatures(bool showRaw) {
     Com::printF(Com::tTColon, temp);
     Com::printF(Com::tSpaceSlash, Extruder::current->tempControl.targetTemperatureC, 0);
 #if HAVE_HEATED_BED
-    Com::printF(Com::tSpaceBColon, Extruder::getHeatedBedTemperature());
+    Com::printF(Com::tSpaceBColon, heatedBedController.getStatefulTemperature());
     Com::printF(Com::tSpaceSlash, heatedBedController.targetTemperatureC, 0);
     if((error = heatedBedController.errorState()) > 0) {
         Com::printF(PSTR(" DB:"), error);
@@ -183,7 +186,7 @@ void Commands::printTemperatures(bool showRaw) {
 #if NUM_EXTRUDER > 1 && MIXING_EXTRUDER == 0
     for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
         Com::printF(Com::tSpaceT, (int)i);
-        Com::printF(Com::tColon, extruder[i].tempControl.currentTemperatureC);
+        Com::printF(Com::tColon, extruder[i].tempControl.getStatefulTemperature());
         Com::printF(Com::tSpaceSlash, extruder[i].tempControl.targetTemperatureC, 0);
         Com::printF(Com::tSpaceAt, (int)i);
         Com::printF(Com::tColon, (pwm_pos[extruder[i].tempControl.pwmIndex])); // Show output of auto tune when tuning!
@@ -206,7 +209,7 @@ void Commands::printTemperatures(bool showRaw) {
     }
 #endif
 #ifdef FAKE_CHAMBER
-    Com::printF(PSTR(" C:"), extruder[0].tempControl.currentTemperatureC);
+    Com::printF(PSTR(" C:"), extruder[0].tempControl.getStatefulTemperature());
     Com::printF(Com::tSpaceSlash, extruder[0].tempControl.targetTemperatureC, 0);
     Com::printF(PSTR(" @:"), (pwm_pos[extruder[0].tempControl.pwmIndex]));
 #endif
@@ -523,16 +526,6 @@ TMC2130Stepper* tmcDriverByIndex(uint8_t index) {
             return Printer::tmc_driver_e2;
         break;
 #endif
-#if TMC2130_ON_EXT3
-        case 6: // E3 Axis
-            return Printer::tmc_driver_e3;
-        break;
-#endif
-#if TMC2130_ON_EXT4
-        case 7: // E4 Axis
-            return Printer::tmc_driver_e4;
-        break;
-#endif
         default:
             return NULL;
         break;
@@ -582,12 +575,6 @@ void motorCurrentReadings() {
 #endif
 #if TMC2130_ON_EXT2
     Com::printF(PSTR(" E2:"), (uint32_t)(Printer::tmc_driver_e2->rms_current()));
-#endif
-#if TMC2130_ON_EXT3
-    Com::printF(PSTR(" E3:"), (uint32_t)(Printer::tmc_driver_e3->rms_current()));
-#endif
-#if TMC2130_ON_EXT4
-    Com::printF(PSTR(" E4:"), (uint32_t)(Printer::tmc_driver_e4->rms_current()));
 #endif
     Com::printFLN(Com::tSpace);
 }
@@ -744,13 +731,7 @@ void microstepReadings() {
     Com::printF(PSTR(" E1:"), (uint32_t)(Printer::tmc_driver_e1->microsteps()));
 #endif
 #if TMC2130_ON_EXT2
-    Com::printF(PSTR(" E2:"), (uint32_t)(Printer::tmc_driver_e2->microsteps()));
-#endif
-#if TMC2130_ON_EXT3
-    Com::printF(PSTR(" E3:"), (uint32_t)(Printer::tmc_driver_e3->microsteps()));
-#endif
-#if TMC2130_ON_EXT4
-    Com::printF(PSTR(" E4:"), (uint32_t)(Printer::tmc_driver_e4->microsteps()));
+    Com::printF(PSTR(" E1:"), (uint32_t)(Printer::tmc_driver_e2->microsteps()));
 #endif
     Com::printFLN(Com::tSpace);
 }
@@ -1042,7 +1023,7 @@ void Commands::processGCode(GCode *com) {
         // disable laser for G0 moves
         bool laserOn = LaserDriver::laserOn;
         if(Printer::mode == PRINTER_MODE_LASER) {
-            if(com->G == 0) {
+            if(com->G == 0 || (!LaserDriver::laserOn && !com->hasE())) {
                 LaserDriver::laserOn = false;
                 LaserDriver::firstMove = true; //set G1 flag for Laser
             } else {
@@ -1178,13 +1159,15 @@ void Commands::processGCode(GCode *com) {
 #endif
 #endif
         bool ok = true;
-        Printer::startProbing(true);
+        ok = Printer::startProbing(true);
         bool oldAutolevel = Printer::isAutolevelActive();
         Printer::setAutolevelActive(false);
         float sum = 0, last, oldFeedrate = Printer::feedrate;
-        Printer::moveTo(EEPROM::zProbeX1(), EEPROM::zProbeY1(), IGNORE_COORDINATE, IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
-        sum = Printer::runZProbe(true, false, Z_PROBE_REPETITIONS, false);
-        if(sum == ILLEGAL_Z_PROBE) ok = false;
+		if(ok) {
+			Printer::moveTo(EEPROM::zProbeX1(), EEPROM::zProbeY1(), IGNORE_COORDINATE, IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
+			sum = Printer::runZProbe(true, false, Z_PROBE_REPETITIONS, false);
+			if(sum == ILLEGAL_Z_PROBE) ok = false;
+		}
         if(ok) {
             Printer::moveTo(EEPROM::zProbeX2(), EEPROM::zProbeY2(), IGNORE_COORDINATE, IGNORE_COORDINATE, EEPROM::zProbeXYSpeed());
             last = Printer::runZProbe(false, false);
@@ -1341,7 +1324,8 @@ void Commands::processGCode(GCode *com) {
         if(com->hasZ()) zOff = Printer::convertToMM(com->Z) - Printer::currentPosition[Z_AXIS];
         Printer::setOrigin(xOff, yOff, zOff);
         if(com->hasE()) {
-            Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
+			Printer::destinationPositionTransformed[E_AXIS] = Printer::currentPositionTransformed[E_AXIS] = Printer::convertToMM(com->E);
+            Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS] = Printer::destinationPositionTransformed[E_AXIS] * Printer::axisStepsPerMM[E_AXIS];
         }
 		if(com->hasX() || com->hasY() || com->hasZ()) {
 			Com::printF(PSTR("X_OFFSET:"), Printer::coordinateOffset[X_AXIS], 3);
@@ -1554,7 +1538,9 @@ void Commands::processGCode(GCode *com) {
 #ifndef G134_PRECISION
 #define G134_PRECISION 0.05
 #endif
-        Printer::startProbing(true);
+        if(!Printer::startProbing(true)) {
+			break;
+		}
         for(int r = 0; r < G134_REPETITIONS && !bigError; r++) {
             Extruder::selectExtruderById(p);
             float refHeight = Printer::runZProbe(false, false);
@@ -1801,6 +1787,34 @@ void Commands::processMCode(GCode *com) {
     case 83: // M83
         Printer::relativeExtruderCoordinateMode = true;
         break;
+	case 17: // M17 is to enable named axis
+	{
+		Commands::waitUntilEndOfAllMoves();
+		bool named = false;
+		if(com->hasX()) {
+			named = true;
+			Printer::enableXStepper();
+		}
+		if(com->hasY()) {
+			named = true;
+			Printer::enableYStepper();
+		}
+		if(com->hasZ()) {
+			named = true;
+			Printer::enableZStepper();
+		}
+		if(com->hasE()) {
+			named = true;
+			Extruder::enableCurrentExtruderMotor();
+		}
+		if(!named) {
+			Printer::enableXStepper();
+			Printer::enableYStepper();
+			Printer::enableZStepper();
+			Extruder::enableAllExtruderMotors();
+		}
+	}
+	break;
 	case 18: // M18 is to disable named axis
         {
 			Commands::waitUntilEndOfAllMoves();
@@ -1986,6 +2000,9 @@ void Commands::processMCode(GCode *com) {
         }
         break;
 #endif
+	case 108:
+		Printer::breakLongCommand = false;
+		break;
     case 111: // M111 enable/disable run time debug flags
         if(com->hasS()) Printer::setDebugLevel(static_cast<uint8_t>(com->S));
         if(com->hasP()) {
@@ -2040,6 +2057,11 @@ void Commands::processMCode(GCode *com) {
 #endif
         Com::cap(PSTR("PAUSESTOP:1"));
         Com::cap(PSTR("PREHEAT:1"));
+#if EMERGENCY_PARSER
+		Com::cap(PSTR("EMERGENCY_PARSER:1"));
+#else
+		Com::cap(PSTR("EMERGENCY_PARSER:0"));
+#endif
         reportPrinterUsage();
         Printer::reportPrinterMode();
         break;
@@ -2385,10 +2407,12 @@ void Commands::processMCode(GCode *com) {
     break;
 #if FEATURE_BABYSTEPPING
     case 290: // M290 Z<babysteps> - Correct by adding baby steps for Z mm
+#if EMERGENCY_PARSER == 0
         if(com->hasZ()) {
             if(abs(com->Z) < (32700 - labs(Printer::zBabystepsMissing)) * Printer::axisStepsPerMM[Z_AXIS])
                 Printer::zBabystepsMissing += com->Z * Printer::axisStepsPerMM[Z_AXIS];
         }
+#endif
         break;
 #endif
 #if defined(BEEPER_PIN) && BEEPER_PIN>=0
@@ -2710,6 +2734,27 @@ void Commands::processMCode(GCode *com) {
     }
     break;
 #endif
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+    case 606: 
+		{
+			float newXpos = 0;
+			if (com->hasX())
+		        newXpos = abs(com->X);
+	        if (Extruder::current->isLeftCarriage()) { //left carriage
+				newXpos = Printer::xMin + newXpos;
+			} else { //right carriage
+		        newXpos = Printer::xLength - Printer::xMin - newXpos;
+			}
+	        if (Printer::isPositionAllowed(newXpos,Printer::currentPosition[Y_AXIS],Printer::currentPosition[Z_AXIS])) {        	        	  	
+				Printer::moveToReal(newXpos, IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE,(com->hasF() ? com->F : EXTRUDER_SWITCH_XY_SPEED));
+			    Printer::lastCmdPos[X_AXIS] = newXpos;
+		        Printer::updateCurrentPosition(false);
+	            Com::writeToAll = false;
+				printCurrentPosition();
+			}
+		}
+        break;
+#endif
     case 670:
 #if EEPROM_MODE != 0
         if(com->hasS()) {
@@ -2814,12 +2859,6 @@ void Commands::processMCode(GCode *com) {
 #if TMC2130_ON_EXT2
             Com::printF(PSTR(" E2:"), Printer::tmc_driver_e2->sg_stall_value());
 #endif
-#if TMC2130_ON_EXT3
-            Com::printF(PSTR(" E3:"), Printer::tmc_driver_e3->sg_stall_value());
-#endif
-#if TMC2130_ON_EXT4
-            Com::printF(PSTR(" E4:"), Printer::tmc_driver_e4->sg_stall_value());
-#endif
         }
 #if TMC2130_ON_X
         if(com->hasX()) {
@@ -2846,27 +2885,15 @@ void Commands::processMCode(GCode *com) {
         }
 #endif
 #if TMC2130_ON_EXT1
-        if(com->hasE()) {
-            Com::printF(PSTR(" E1:"), com->F);
-            Printer::tmc_driver_e1->sg_stall_value(com->F);
+        if(com->hasA()) {
+            Com::printF(PSTR(" E1:"), com->A);
+            Printer::tmc_driver_e1->sg_stall_value(com->A);
         }
 #endif
 #if TMC2130_ON_EXT2
-        if(com->hasE()) {
-            Com::printF(PSTR(" E2:"), com->G);
-            Printer::tmc_driver_e2->sg_stall_value(com->G);
-        }
-#endif
-#if TMC2130_ON_EXT3
-        if(com->hasE()) {
-            Com::printF(PSTR(" E3:"), com->K);
-            Printer::tmc_driver_e3->sg_stall_value(com->K);
-        }
-#endif
-#if TMC2130_ON_EXT4
-        if(com->hasE()) {
-            Com::printF(PSTR(" E4:"), com->N);
-            Printer::tmc_driver_e4->sg_stall_value(com->N);
+        if(com->hasB()) {
+            Com::printF(PSTR(" E2:"), com->B);
+            Printer::tmc_driver_e2->sg_stall_value(com->B);
         }
 #endif
         Com::println();
@@ -2891,12 +2918,6 @@ void Commands::processMCode(GCode *com) {
 #endif
 #if TMC2130_ON_EXT2
             Com::printF(PSTR(" E2:"), Printer::tmc_driver_e2->stealthChop());
-#endif
-#if TMC2130_ON_EXT3
-            Com::printF(PSTR(" E3:"), Printer::tmc_driver_e3->stealthChop());
-#endif
-#if TMC2130_ON_EXT4
-            Com::printF(PSTR(" E4:"), Printer::tmc_driver_e4->stealthChop());
 #endif
         }
 #if TMC2130_ON_X
@@ -2924,27 +2945,15 @@ void Commands::processMCode(GCode *com) {
         }
 #endif
 #if TMC2130_ON_EXT1
-        if(com->hasE()) {
-            Com::printF(PSTR(" E1:"), com->F);
-            Printer::tmc_driver_e1->stealthChop((bool)(com->F));
+        if(com->hasA()) {
+            Com::printF(PSTR(" E1:"), com->A);
+            Printer::tmc_driver_e1->stealthChop((bool)(com->A));
         }
 #endif
 #if TMC2130_ON_EXT2
-        if(com->hasE()) {
-            Com::printF(PSTR(" E2:"), com->G);
-            Printer::tmc_driver_e2->stealthChop((bool)(com->G));
-        }
-#endif
-#if TMC2130_ON_EXT3
-        if(com->hasE()) {
-            Com::printF(PSTR(" E3:"), com->K);
-            Printer::tmc_driver_e3->stealthChop((bool)(com->K));
-        }
-#endif
-#if TMC2130_ON_EXT4
-        if(com->hasE()) {
-            Com::printF(PSTR(" E4:"), com->N);
-            Printer::tmc_driver_e4->stealthChop((bool)(com->N));
+        if(com->hasB()) {
+            Com::printF(PSTR(" E2:"), com->B);
+            Printer::tmc_driver_e2->stealthChop((bool)(com->B));
         }
 #endif
         Com::println();

@@ -123,6 +123,10 @@ void PrintLine::moveRelativeDistanceInSteps(int32_t x, int32_t y, int32_t z, int
     }
 #endif //  MOVE_X_WHEN_HOMED == 1 || MOVE_Y_WHEN_HOMED == 1 || MOVE_Z_WHEN_HOMED == 1
     float savedFeedrate = Printer::feedrate;
+    Printer::destinationPositionTransformed[X_AXIS] = Printer::currentPositionTransformed[X_AXIS] + x * Printer::invAxisStepsPerMM[X_AXIS];
+    Printer::destinationPositionTransformed[Y_AXIS] = Printer::currentPositionTransformed[Y_AXIS] + y * Printer::invAxisStepsPerMM[Y_AXIS];
+    Printer::destinationPositionTransformed[Z_AXIS] = Printer::currentPositionTransformed[Z_AXIS] + z * Printer::invAxisStepsPerMM[Z_AXIS];
+    Printer::destinationPositionTransformed[E_AXIS] = Printer::currentPositionTransformed[E_AXIS] + e * Printer::invAxisStepsPerMM[E_AXIS];
     Printer::destinationSteps[X_AXIS] = Printer::currentPositionSteps[X_AXIS] + x;
     Printer::destinationSteps[Y_AXIS] = Printer::currentPositionSteps[Y_AXIS] + y;
     Printer::destinationSteps[Z_AXIS] = Printer::currentPositionSteps[Z_AXIS] + z;
@@ -227,10 +231,12 @@ void PrintLine::queueCartesianSegmentTo(uint8_t check_endstops, uint8_t pathOpti
     for(uint8_t axis = 0; axis < 4; axis++) {
         p->delta[axis] = Printer::destinationSteps[axis] - Printer::currentPositionSteps[axis];
         p->secondSpeed = Printer::fanSpeed;
+        // axisDistanceMM[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
         if(axis == E_AXIS) {
+			axisDistanceMM[axis] = (Printer::destinationPositionTransformed[axis] - Printer::currentPositionTransformed[axis]) * Printer::extrusionFactor;
             if(Printer::mode == PRINTER_MODE_FFF) {
-                Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
-                p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
+                Printer::extrudeMultiplyError += axisDistanceMM[axis] * Printer::axisStepsPerMM[E_AXIS];
+                p->delta[E_AXIS] = lroundf(Printer::extrudeMultiplyError);
                 Printer::extrudeMultiplyError -= p->delta[E_AXIS];
                 Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
             }
@@ -240,14 +246,17 @@ void PrintLine::queueCartesianSegmentTo(uint8_t check_endstops, uint8_t pathOpti
                 p->delta[E_AXIS] = 0;
             }
 #endif
-        }
+			axisDistanceMM[axis] = fabs(axisDistanceMM[axis]);
+        } else {
+			axisDistanceMM[axis] = fabs(Printer::destinationPositionTransformed[axis] - Printer::currentPositionTransformed[axis]);
+		}
         if(p->delta[axis] >= 0)
             p->setPositiveDirectionForAxis(axis);
         else
             p->delta[axis] = -p->delta[axis];
-        axisDistanceMM[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
         if(p->delta[axis]) p->setMoveOfAxis(axis);
         Printer::currentPositionSteps[axis] = Printer::destinationSteps[axis];
+        Printer::currentPositionTransformed[axis] = Printer::destinationPositionTransformed[axis];
     }
     if(p->isNoMove()) {
         if(newPath)   // need to delete dummy elements, otherwise commands can get locked.
@@ -382,9 +391,10 @@ void PrintLine::queueCartesianMove(uint8_t check_endstops, uint8_t pathOptimize)
         p->delta[axis] = Printer::destinationSteps[axis] - Printer::currentPositionSteps[axis];
         p->secondSpeed = Printer::fanSpeed;
         if(axis == E_AXIS) {
+	        axisDistanceMM[E_AXIS] = (Printer::destinationPositionTransformed[E_AXIS] - Printer::currentPositionTransformed[E_AXIS]) * Printer::extrusionFactor;
             if(Printer::mode == PRINTER_MODE_FFF) {
-                Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
-                p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
+				Printer::extrudeMultiplyError += axisDistanceMM[axis] * Printer::axisStepsPerMM[E_AXIS];
+				p->delta[E_AXIS] = lroundf(Printer::extrudeMultiplyError);
                 Printer::extrudeMultiplyError -= p->delta[E_AXIS];
                 Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
             }
@@ -394,14 +404,17 @@ void PrintLine::queueCartesianMove(uint8_t check_endstops, uint8_t pathOptimize)
                 p->delta[E_AXIS] = 0;
             }
 #endif
-        }
+			axisDistanceMM[axis] = fabs(axisDistanceMM[axis]);
+        } else {
+		    axisDistanceMM[axis] = fabs(Printer::destinationPositionTransformed[axis] - Printer::currentPositionTransformed[axis]);
+		}
         if(p->delta[axis] >= 0)
             p->setPositiveDirectionForAxis(axis);
         else
             p->delta[axis] = -p->delta[axis];
-        axisDistanceMM[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
         if(p->delta[axis]) p->setMoveOfAxis(axis);
         Printer::currentPositionSteps[axis] = Printer::destinationSteps[axis];
+		Printer::currentPositionTransformed[axis] = Printer::destinationPositionTransformed[axis];
     }
     if(p->isNoMove()) {
         if(newPath)   // need to delete dummy elements, otherwise commands can get locked.
@@ -595,7 +608,7 @@ void PrintLine::calculateMove(float axisDistanceMM[], uint8_t pathOptimize, fast
         setNominalMove();
 
     vMax = F_CPU / fullInterval; // maximum steps per second, we can reach
-    // if(p->vMax>46000)  // gets overflow in N computation
+	// if(p->vMax>46000)  // gets overflow in N computation
     //   p->vMax = 46000;
     //p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
 #if USE_ADVANCE
@@ -607,7 +620,7 @@ void PrintLine::calculateMove(float axisDistanceMM[], uint8_t pathOptimize, fast
         advanceL = 0;
     } else {
         float advlin = fabs(speedE) * Extruder::current->advanceL * 0.001 * Printer::axisStepsPerMM[E_AXIS];
-        advanceL = (uint16_t)((65536L * advlin) / vMax); //advanceLscaled = (65536*vE*k2)/vMax
+        advanceL = ((65536L * advlin) / vMax); //advanceLscaled = (65536*vE*k2)/vMax
 #if ENABLE_QUADRATIC_ADVANCE
         advanceFull = 65536 * Extruder::current->advanceK * speedE * speedE; // Steps*65536 at full speed
         long steps = (HAL::U16SquaredToU32(vMax)) / (accelerationPrim << 1); // v^2/(2*a) = steps needed to accelerate from 0-vMax
@@ -645,10 +658,12 @@ void PrintLine::calculateMove(float axisDistanceMM[], uint8_t pathOptimize, fast
 #ifdef DEBUG_QUEUE_MOVE
     if(Printer::debugEcho()) {
         logLine();
-        Com::printFLN(Com::tDBGLimitInterval, limitInterval);
+		Com::printF(PSTR("de:"), axisDistanceMM[E_AXIS],5);
+		Com::printFLN(PSTR(" se:"), speedE);
+        //Com::printFLN(Com::tDBGLimitInterval, limitInterval);
         Com::printFLN(Com::tDBGMoveDistance, distance);
         Com::printFLN(Com::tDBGCommandedFeedrate, Printer::feedrate);
-        Com::printFLN(Com::tDBGConstFullSpeedMoveTime, timeForMove);
+        // Com::printFLN(Com::tDBGConstFullSpeedMoveTime, timeForMove);
     }
 #endif
     // Make result permanent
@@ -903,39 +918,53 @@ void PrintLine::updateStepsParameter() {
     vEnd   = vMax * endFactor;
 
 #if CPU_ARCH == ARCH_AVR
-    uint32_t vmax2 = HAL::U16SquaredToU32(vMax);
-    accelSteps = ((vmax2 - HAL::U16SquaredToU32(vStart)) / (accelerationPrim << 1)) + 1; // Always add 1 for missing precision
-    decelSteps = ((vmax2 - HAL::U16SquaredToU32(vEnd))  / (accelerationPrim << 1)) + 1;
+	uint32_t vmax2 = HAL::U16SquaredToU32(vMax);
 #else
-    uint64_t vmax2 = static_cast<uint64_t>(vMax) * static_cast<uint64_t>(vMax);
-    accelSteps = ((vmax2 - static_cast<uint64_t>(vStart) * static_cast<uint64_t>(vStart)) / (accelerationPrim << 1)) + 1; // Always add 1 for missing precision
-    decelSteps = ((vmax2 - static_cast<uint64_t>(vEnd) * static_cast<uint64_t>(vEnd)) / (accelerationPrim << 1)) + 1;
+	uint64_t vmax2 = static_cast<uint64_t>(vMax) * static_cast<uint64_t>(vMax);
 #endif
-
+	if(vStart == vMax) {
+		accelSteps = 0;
+	} else {
+#if CPU_ARCH == ARCH_AVR
+		accelSteps = ((vmax2 - HAL::U16SquaredToU32(vStart)) / (accelerationPrim << 1)) + 1; // Always add 1 for missing precision
+#else
+		accelSteps = ((vmax2 - static_cast<uint64_t>(vStart) * static_cast<uint64_t>(vStart)) / (accelerationPrim << 1)) + 1; // Always add 1 for missing precision
+#endif
+	}
+	if(vEnd == vMax) {
+		decelSteps = 0;
+	} else {
+#if CPU_ARCH == ARCH_AVR
+		decelSteps = ((vmax2 - HAL::U16SquaredToU32(vEnd))  / (accelerationPrim << 1)) + 1;
+#else
+		decelSteps = ((vmax2 - static_cast<uint64_t>(vEnd) * static_cast<uint64_t>(vEnd)) / (accelerationPrim << 1)) + 1;
+#endif
+	}
 #if USE_ADVANCE
 #if ENABLE_QUADRATIC_ADVANCE
     advanceStart = (float)advanceFull * startFactor * startFactor;
     advanceEnd   = (float)advanceFull * endFactor   * endFactor;
 #endif
 #endif
-    if(static_cast<int32_t>(accelSteps + decelSteps) >= stepsRemaining) { // can't reach limit speed
+    if(static_cast<int32_t>(accelSteps + decelSteps) > stepsRemaining) { // can't reach limit speed
         uint32_t red = (accelSteps + decelSteps - stepsRemaining) >> 1;
         accelSteps = accelSteps - RMath::min(static_cast<int32_t>(accelSteps), static_cast<int32_t>(red));
         decelSteps = decelSteps - RMath::min(static_cast<int32_t>(decelSteps), static_cast<int32_t>(red));
     }
     setParameterUpToDate();
 #ifdef DEBUG_QUEUE_MOVE
-    if(Printer::debugEcho()) {
+    if(false && Printer::debugEcho()) {
         Com::printFLN(Com::tDBGId, (int)this);
         Com::printF(Com::tDBGVStartEnd, (long)vStart);
-        Com::printFLN(Com::tSlash, (long)vEnd);
+        Com::printF(Com::tSlash, (long)vEnd);
+        Com::printFLN(Com::tSlash, (long)vMax);
         Com::printF(Com::tDBAccelSteps, (long)accelSteps);
         Com::printF(Com::tSlash, (long)decelSteps);
         Com::printFLN(Com::tSlash, (long)stepsRemaining);
         Com::printF(Com::tDBGStartEndSpeed, startSpeed, 1);
         Com::printFLN(Com::tSlash, endSpeed, 1);
-        Com::printFLN(Com::tDBGFlags, (uint32_t)flags);
-        Com::printFLN(Com::tDBGJoinFlags, (uint32_t)joinFlags);
+        // Com::printFLN(Com::tDBGFlags, (uint32_t)flags);
+        // Com::printFLN(Com::tDBGJoinFlags, (uint32_t)joinFlags);
     }
 #endif
 }
@@ -1137,15 +1166,16 @@ void PrintLine::LaserWarmUp( uint32_t wait) {
 void PrintLine::logLine() {
 #ifdef DEBUG_QUEUE_MOVE
     Com::printFLN(Com::tDBGId, (int)this);
-    Com::printArrayFLN(Com::tDBGDelta, delta);
-    Com::printFLN(Com::tDBGDir, (uint32_t)dir);
-    Com::printFLN(Com::tDBGFlags, (uint32_t)flags);
+    // Com::printArrayFLN(Com::tDBGDelta, delta);
+    // Com::printFLN(Com::tDBGDir, (uint32_t)dir);
+    // Com::printFLN(Com::tDBGFlags, (uint32_t)flags);
     Com::printFLN(Com::tDBGFullSpeed, fullSpeed);
     Com::printFLN(Com::tDBGVMax, (int32_t)vMax);
-    Com::printFLN(Com::tDBGAcceleration, accelerationDistance2);
-    Com::printFLN(Com::tDBGAccelerationPrim, (int32_t)accelerationPrim);
-    Com::printFLN(Com::tDBGRemainingSteps, stepsRemaining);
+    // Com::printFLN(Com::tDBGAcceleration, accelerationDistance2);
+    // Com::printFLN(Com::tDBGAccelerationPrim, (int32_t)accelerationPrim);
+    // Com::printFLN(Com::tDBGRemainingSteps, stepsRemaining);
 #if USE_ADVANCE
+	Com::printFLN(PSTR("adL:"), (int32_t)advanceL);
 #if ENABLE_QUADRATIC_ADVANCE
     Com::printFLN(Com::tDBGAdvanceFull, advanceFull >> 16);
     Com::printFLN(Com::tDBGAdvanceRate, advanceRate);
@@ -1734,7 +1764,7 @@ inline uint16_t PrintLine::calculateNonlinearSubSegments(uint8_t softEndstop) {
         float segment = static_cast<float>(numNonlinearSegments - s + 1);
         for(i = 0; i < Z_AXIS_ARRAY; i++) // End of segment in Cartesian steps
             // Perfect approximation, but slower, so we limit it to faster processors like arm
-            destinationSteps[i] = static_cast<int32_t>(floor(0.5 + dx[i] * segment)) + Printer::currentPositionSteps[i];
+            destinationSteps[i] = lroundf(dx[i] * segment) + Printer::currentPositionSteps[i];
 #endif
         // Verify that delta calculation has a solution
         if (transformCartesianStepsToDeltaSteps(destinationSteps, destinationDeltaSteps)) {
@@ -1877,9 +1907,11 @@ uint8_t PrintLine::queueNonlinearMove(uint8_t check_endstops, uint8_t pathOptimi
     secondspeed_t secondSpeed = Printer::fanSpeed;
     for(fast8_t axis = 0; axis < E_AXIS_ARRAY; axis++) {
         difference[axis] = Printer::destinationSteps[axis] - Printer::currentPositionSteps[axis];
+		// axisDistanceMM[axis] = fabs(difference[axis] * Printer::invAxisStepsPerMM[axis]);
         if(axis == E_AXIS) {
+			axisDistanceMM[E_AXIS] = (Printer::destinationPositionTransformed[E_AXIS] - Printer::currentPositionTransformed[E_AXIS]) * Printer::extrusionFactor;
             if(Printer::mode == PRINTER_MODE_FFF) {
-                Printer::extrudeMultiplyError += (static_cast<float>(difference[E_AXIS]) * Printer::extrusionFactor);
+                Printer::extrudeMultiplyError += axisDistanceMM[axis] * Printer::axisStepsPerMM[E_AXIS];
                 difference[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
                 Printer::extrudeMultiplyError -= difference[E_AXIS];
                 axisDistanceMM[E_AXIS] = difference[E_AXIS] * Printer::invAxisStepsPerMM[E_AXIS];
@@ -1892,8 +1924,11 @@ uint8_t PrintLine::queueNonlinearMove(uint8_t check_endstops, uint8_t pathOptimi
                 axisDistanceMM[E_AXIS] = 0;
             }
 #endif
-        } else
-            axisDistanceMM[axis] = fabs(difference[axis] * Printer::invAxisStepsPerMM[axis]);
+			axisDistanceMM[E_AXIS] = fabs(axisDistanceMM[E_AXIS]);
+        } else {
+            // axisDistanceMM[axis] = fabs(difference[axis] * Printer::invAxisStepsPerMM[axis]);
+			axisDistanceMM[axis] = fabs(Printer::destinationPositionTransformed[axis] - Printer::currentPositionTransformed[axis]);
+		}
     }
 
     float cartesianDistance;
@@ -1969,7 +2004,11 @@ uint8_t PrintLine::queueNonlinearMove(uint8_t check_endstops, uint8_t pathOptimi
     insertWaitMovesIfNeeded(pathOptimize, RMath::min(PRINTLINE_CACHE_SIZE - 4, numLines));
     uint32_t oldEDestination = Printer::destinationSteps[E_AXIS]; // flow and volumetric extrusion changed virtual target
     Printer::currentPositionSteps[E_AXIS] = 0;
-
+	if(numLines > 1) {
+		for(fast8_t i = 0; i < E_AXIS; i++) {
+			axisDistanceMM[i] /= numLines;
+		}
+	}
     for (int lineNumber = 1; lineNumber <= numLines; lineNumber++) {
         waitForXFreeLines(1);
         PrintLine *p = getNextWriteLine();
@@ -1986,7 +2025,7 @@ uint8_t PrintLine::queueNonlinearMove(uint8_t check_endstops, uint8_t pathOptimi
             for (fast8_t i = 0; i < E_AXIS_ARRAY; i++) {
                 Printer::destinationSteps[i] = startPosition[i] + (difference[i] * lineNumber) / numLines;
                 fractionalSteps[i] = Printer::destinationSteps[i] - Printer::currentPositionSteps[i];
-                axisDistanceMM[i] = fabs(fractionalSteps[i] * Printer::invAxisStepsPerMM[i]);
+                // axisDistanceMM[i] = fabs(fractionalSteps[i] * Printer::invAxisStepsPerMM[i]);
             }
             calculateDirectionAndDelta(fractionalSteps, &p->dir, p->delta);
             p->distance = cartesianDistance;
@@ -2052,6 +2091,9 @@ uint8_t PrintLine::queueNonlinearMove(uint8_t check_endstops, uint8_t pathOptimi
         }
     }
     Printer::currentPositionSteps[E_AXIS] = Printer::destinationSteps[E_AXIS] = oldEDestination;
+	for(fast8_t i = 0; i < E_AXIS; i++) {
+		Printer::currentPositionTransformed[i] = Printer::destinationPositionTransformed[i];
+	}
     lastMoveID++; // Will wrap at 255
 
     return true; // flag success
@@ -2369,13 +2411,14 @@ int32_t PrintLine::bresenhamStep() { // Version for delta printer
         if((cur->error[E_AXIS] -= cur->delta[E_AXIS]) < 0) {
 #if USE_ADVANCE
             if(Printer::isAdvanceActivated()) { // Use interrupt for movement
-                if(cur->isEPositiveMove())
+                if(cur->isEPositiveMove()) {
                     Printer::extruderStepsNeeded++;
-                else
+                } else {
                     Printer::extruderStepsNeeded--;
+				}
             } else
 #endif
-                Extruder::step();
+            {   Extruder::step();}
             cur->error[E_AXIS] += cur_errupd;
         }
         if (curd) {
@@ -2716,32 +2759,27 @@ int32_t PrintLine::bresenhamStep() { // version for Cartesian printer
         if((cur->error[E_AXIS] -= cur->delta[E_AXIS]) < 0) {
 #if USE_ADVANCE
             if(Printer::isAdvanceActivated()) { // Use interrupt for movement
-                if(cur->isEPositiveMove())
+                if(cur->isEPositiveMove()) {
                     Printer::extruderStepsNeeded++;
-                else
+                } else {
                     Printer::extruderStepsNeeded--;
+				}
             } else
 #endif
-                Extruder::step();
+               { Extruder::step();}
             cur->error[E_AXIS] += cur_errupd;
         }
-#if CPU_ARCH == ARCH_AVR
         if(cur->isXMove())
-#endif
             if((cur->error[X_AXIS] -= cur->delta[X_AXIS]) < 0) {
                 cur->startXStep();
                 cur->error[X_AXIS] += cur_errupd;
             }
-#if CPU_ARCH == ARCH_AVR
         if(cur->isYMove())
-#endif
             if((cur->error[Y_AXIS] -= cur->delta[Y_AXIS]) < 0) {
                 cur->startYStep();
                 cur->error[Y_AXIS] += cur_errupd;
             }
-#if CPU_ARCH == ARCH_AVR
         if(cur->isZMove())
-#endif
             if((cur->error[Z_AXIS] -= cur->delta[Z_AXIS]) < 0) {
                 cur->startZStep();
                 cur->error[Z_AXIS] += cur_errupd;
@@ -2769,7 +2807,9 @@ int32_t PrintLine::bresenhamStep() { // version for Cartesian printer
     //If acceleration is enabled on this move and we are in the acceleration segment, calculate the current interval
     if (cur->moveAccelerating()) { // we are accelerating
         Printer::vMaxReached = HAL::ComputeV(Printer::timer, cur->fAcceleration) + cur->vStart; // v = v0 + a * t
-        if(Printer::vMaxReached > cur->vMax) Printer::vMaxReached = cur->vMax;
+        if (Printer::vMaxReached > cur->vMax) {
+			Printer::vMaxReached = cur->vMax;
+		}
         unsigned int v = Printer::updateStepsPerTimerCall(Printer::vMaxReached);
         Printer::interval = HAL::CPUDivU2(v);
         // if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds

@@ -366,7 +366,7 @@ void TemperatureController::waitForTargetTemperature() {
         }*/
         Commands::checkForPeriodicalActions(true);
         GCode::keepAlive(WaitHeater);
-        if(fabs(targetTemperatureC - currentTemperatureC) <= 1) {
+        if(fabs(targetTemperatureC - currentTemperatureC) <= 1 || Printer::breakLongCommand) {
             Printer::setAutoreportTemp(oldReport);
             return;
         }
@@ -398,12 +398,17 @@ Since temp. is negative no heating will occur. */
 void Extruder::pauseExtruders(bool bed) {
 #if NUM_EXTRUDER > 0
     disableAllExtruderMotors();
+#if SHARED_EXTRUDER_HEATER
+     extruder[0].tempControl.targetTemperatureC = -fabs(extruder[0].tempControl.targetTemperatureC);
+     pwm_pos[extruder[0].tempControl.pwmIndex] = 0;
+#else
     for(fast8_t i = 0; i < NUM_EXTRUDER; i++) {
         if(extruder[i].tempControl.targetTemperatureC > 0) {
             extruder[i].tempControl.targetTemperatureC = -fabs(extruder[i].tempControl.targetTemperatureC);
             pwm_pos[extruder[i].tempControl.pwmIndex] = 0;
         }
     }
+#endif
 #endif
 #if HAVE_HEATED_BED
     if(bed) {
@@ -416,10 +421,15 @@ void Extruder::pauseExtruders(bool bed) {
 void Extruder::unpauseExtruders(bool wait) {
 #if NUM_EXTRUDER > 0
     // activate temperatures
+#if SHARED_EXTRUDER_HEATER
+   if(extruder[0].tempControl.targetTemperatureC < 0)
+        extruder[0].tempControl.targetTemperatureC = -extruder[0].tempControl.targetTemperatureC;
+#else
     for(fast8_t i = 0; i < NUM_EXTRUDER; i++) {
         if(extruder[i].tempControl.targetTemperatureC < 0)
             extruder[i].tempControl.targetTemperatureC = -extruder[i].tempControl.targetTemperatureC;
     }
+#endif
 #endif
 #if HAVE_HEATED_BED
     bool waitBed = false;
@@ -469,6 +479,7 @@ void Extruder::markAllUnjammed() {
     Printer::unsetAnyTempsensorDefect(); // stop alarm
     Com::printInfoFLN(PSTR("Marked all extruders as unjammed."));
     Printer::setUIErrorMessage(false);
+	UI_ERROR("");
 }
 
 void Extruder::resetJamSteps() {
@@ -686,6 +697,18 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
 
 #if RAISE_Z_ON_TOOLCHANGE > 0
     float lastZ = Printer::lastCmdPos[Z_AXIS];
+    bool raiseZ = true;
+#endif
+
+
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0 && RAISE_Z_ON_TOOLCHANGE
+    if (current->isLeftCarriage()) {
+        if (Printer::currentPositionSteps[X_AXIS] == Printer::xMinSteps)
+            raiseZ = false;
+    }
+    else
+        if (Printer::currentPositionSteps[X_AXIS] == Printer::xMaxSteps)
+            raiseZ = false;            	
 #endif
 
 #if DUAL_X_AXIS
@@ -709,7 +732,7 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
     current->extrudePosition = Printer::currentPositionSteps[E_AXIS];
 
 #if RAISE_Z_ON_TOOLCHANGE > 0 && !LAZY_DUAL_X_AXIS
-    if (executeSelect && Printer::isZHomed())
+    if (executeSelect && Printer::isZHomed() && raiseZ)
         PrintLine::moveRelativeDistanceInSteps(0, 0, static_cast<int32_t>(RAISE_Z_ON_TOOLCHANGE * Printer::axisStepsPerMM[Z_AXIS]), 0, Printer::homingFeedrate[Z_AXIS], true, false);
 #endif
 
@@ -726,7 +749,14 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
       ) { // park extruder that will become inactive
         bool oldDestCheck = Printer::isNoDestinationCheck();
         Printer::setNoDestinationCheck(true);
-        PrintLine::moveRelativeDistanceInSteps(current->xOffset - dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+        #if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+            if (current->isLeftCarriage())
+                PrintLine::moveRelativeDistanceInSteps(Printer::xMinSteps - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+            else
+                PrintLine::moveRelativeDistanceInSteps(Printer::xMaxSteps - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false); 
+        #else
+            PrintLine::moveRelativeDistanceInSteps(current->xOffset - dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+        #endif
         Printer::setNoDestinationCheck(oldDestCheck);
 #if LAZY_DUAL_X_AXIS
         Printer::sledParked = true;
@@ -751,6 +781,19 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
 
     Extruder::current = next;
     // --------------------- Now new extruder is active --------------------
+
+#if DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0
+    if (next->isLeftCarriage()) { //left carriage
+        Printer::xMin = Printer::x1Min;
+        Printer::xLength = Printer::x1Length;
+    }
+    else { //right carriage
+        Printer::xMin = 0.0f;
+        Printer::xLength = (Extruder::current->xOffset / Printer::axisStepsPerMM[X_AXIS]) - Printer::xMin;
+    }
+    Printer::updateDerivedParameter(); // adjust to new xmin/xlength
+#endif
+	  	
 #if DUAL_X_RESOLUTION
     Printer::updateDerivedParameter(); // adjust to new resolution
     dualXPosSteps = Printer::lastCmdPos[X_AXIS] * Printer::axisStepsPerMM[X_AXIS] - Printer::xMinSteps; // correct to where we should be in new coordinates
@@ -766,6 +809,7 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
     Printer::axisStepsPerMM[E_AXIS] = Extruder::current->stepsPerMM;
     Printer::invAxisStepsPerMM[E_AXIS] = 1.0f / Printer::axisStepsPerMM[E_AXIS];
 #endif
+	Printer::destinationPositionTransformed[E_AXIS] = Printer::currentPositionTransformed[E_AXIS] = Printer::currentPositionSteps[E_AXIS] * Printer::invAxisStepsPerMM[E_AXIS];
     Printer::maxFeedrate[E_AXIS] = Extruder::current->maxFeedrate;
 //   max_start_speed_units_per_second[E_AXIS] = Extruder::current->maxStartFeedrate;
     Printer::maxAccelerationMMPerSquareSecond[E_AXIS] = Printer::maxTravelAccelerationMMPerSquareSecond[E_AXIS] = next->maxAcceleration;
@@ -793,8 +837,21 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
     if (executeSelect) {
         Printer::currentPositionSteps[X_AXIS] = Extruder::current->xOffset - dualXPosSteps;
         if(Printer::isXHomed()) {
-            PrintLine::moveRelativeDistanceInSteps(-next->xOffset + dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
-            Printer::currentPositionSteps[X_AXIS] = dualXPosSteps + Printer::xMinSteps;
+            #if DUAL_X_AXIS_MODE > 0        	      
+                if (next->isLeftCarriage()) //left carriage
+                    Printer::currentPositionSteps[X_AXIS] = Printer::xMinSteps;
+                else //right carriage
+                    Printer::currentPositionSteps[X_AXIS] = Extruder::current->xOffset;
+                Printer::offsetX = 0;
+                Printer::updateCurrentPosition(false);
+                Printer::lastCmdPos[X_AXIS] = lastX;
+
+                if (Printer::isPositionAllowed(lastX,Printer::currentPosition[Y_AXIS],Printer::currentPosition[Z_AXIS]))
+                    PrintLine::moveRelativeDistanceInSteps(lroundf(lastX * Printer::axisStepsPerMM[X_AXIS]) - Printer::currentPositionSteps[X_AXIS], 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+            #else
+                PrintLine::moveRelativeDistanceInSteps(-next->xOffset + dualXPosSteps, 0, 0, 0, EXTRUDER_SWITCH_XY_SPEED, true, false);
+                Printer::currentPositionSteps[X_AXIS] = dualXPosSteps + Printer::xMinSteps;
+            #endif
         }
     }
 #endif // LAZY_DUAL_X_AXIS == 0
@@ -837,14 +894,18 @@ void Extruder::selectExtruderById(uint8_t extruderId) {
 #endif
 #if DUAL_X_AXIS == 0 || LAZY_DUAL_X_AXIS == 0
 #if RAISE_Z_ON_TOOLCHANGE > 0 && !LAZY_DUAL_X_AXIS
-	if (Printer::isZHomed()) {
+	if (Printer::isZHomed() && raiseZ) {
 		Printer::moveToReal(IGNORE_COORDINATE, IGNORE_COORDINATE, cz, IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
 		Printer::lastCmdPos[Z_AXIS] = lastZ;
 	}
 #endif
 
 	if(Printer::isHomedAll()) {
-		Printer::moveToReal(cx, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
+        #if (DUAL_X_AXIS_MODE > 0 && LAZY_DUAL_X_AXIS == 0)
+            Printer::moveToReal(IGNORE_COORDINATE, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
+        #else
+            Printer::moveToReal(cx, cy, cz, IGNORE_COORDINATE, EXTRUDER_SWITCH_XY_SPEED);
+        #endif
 	}
 #endif
 	Printer::feedrate = oldfeedrate;
@@ -979,6 +1040,9 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius, uint8_t ext
               ) {
                 waituntil = currentTime + 1000UL * (millis_t)actExtruder->watchPeriod; // now wait for temp. to stabilize
             }
+			if(Printer::breakLongCommand) {
+				break;
+			}
         } while(waituntil == 0 || (waituntil != 0 && (millis_t)(waituntil - currentTime) < 2000000000UL));
         Printer::setAutoreportTemp(oldAutoreport);
 #if RETRACT_DURING_HEATUP
@@ -1646,22 +1710,6 @@ void Extruder::setDirection(uint8_t dir) {
                 RESET_EXTRUDER_JAM(3, dir)
             }
 #endif
-#if NUM_EXTRUDER > 4
-            if(Extruder::dittoMode > 3) {
-                if(dir) {
-                    WRITE(EXT4_DIR_PIN, !EXT4_INVERSE);
-#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER
-                    WRITE(EXT4_DIR2_PIN, !EXT4_INVERSE2);
-#endif
-                } else {
-                    WRITE(EXT4_DIR_PIN, EXT4_INVERSE);
-#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER
-                    WRITE(EXT4_DIR2_PIN, EXT4_INVERSE2);
-#endif
-                }
-                RESET_EXTRUDER_JAM(4, dir)
-            }
-#endif
         }
 #endif
         break;
@@ -1819,14 +1867,6 @@ void Extruder::enable() {
 #endif
         }
 #endif
-#if NUM_EXTRUDER > 4
-        if(Extruder::dittoMode > 3 && extruder[4].enablePin > -1) {
-            digitalWrite(extruder[4].enablePin, extruder[4].enableOn);
-#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER && NUM_EXTRUDER > 4
-            WRITE(EXT4_ENABLE2_PIN, EXT4_ENABLE_ON);
-#endif
-        }
-#endif
     }
 #endif
 #endif
@@ -1933,18 +1973,113 @@ void Extruder::disableCurrentExtruderMotor() {
 #endif
         }
 #endif
-#if NUM_EXTRUDER > 4
-        if(Extruder::dittoMode > 3 && extruder[4].enablePin > -1) {
-            HAL::digitalWrite(extruder[4].enablePin, !extruder[4].enableOn);
-#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER && NUM_EXTRUDER > 4
-            WRITE(EXT4_ENABLE2_PIN, !EXT4_ENABLE_ON);
-#endif
-        }
-#endif
     }
 #endif
 #endif
 #endif // MIXING_EXTRUDER
+}
+void Extruder::enableCurrentExtruderMotor() {
+	#if MIXING_EXTRUDER
+	#if NUM_EXTRUDER > 0 && defined(EXT0_ENABLE_PIN) && EXT0_ENABLE_PIN > -1
+	WRITE(EXT0_ENABLE_PIN, EXT0_ENABLE_ON );
+	#if defined(EXT0_MIRROR_STEPPER) && EXT0_MIRROR_STEPPER
+	WRITE(EXT0_ENABLE2_PIN, EXT0_ENABLE_ON);
+	#endif
+	#endif
+	#if NUM_EXTRUDER > 1 && defined(EXT1_ENABLE_PIN) && EXT1_ENABLE_PIN > -1
+	WRITE(EXT1_ENABLE_PIN, EXT1_ENABLE_ON );
+	#if defined(EXT1_MIRROR_STEPPER) && EXT1_MIRROR_STEPPER
+	WRITE(EXT1_ENABLE2_PIN, EXT1_ENABLE_ON);
+	#endif
+	#endif
+	#if NUM_EXTRUDER > 2 && defined(EXT2_ENABLE_PIN) && EXT2_ENABLE_PIN > -1
+	WRITE(EXT2_ENABLE_PIN, EXT2_ENABLE_ON );
+	#if defined(EXT2_MIRROR_STEPPER) && EXT2_MIRROR_STEPPER
+	WRITE(EXT2_ENABLE2_PIN, EXT2_ENABLE_ON);
+	#endif
+	#endif
+	#if NUM_EXTRUDER > 3 && defined(EXT3_ENABLE_PIN) && EXT3_ENABLE_PIN > -1
+	WRITE(EXT3_ENABLE_PIN, EXT3_ENABLE_ON );
+	#if defined(EXT3_MIRROR_STEPPER) && EXT3_MIRROR_STEPPER
+	WRITE(EXT3_ENABLE2_PIN, EXT3_ENABLE_ON);
+	#endif
+	#endif
+	#if NUM_EXTRUDER > 4 && defined(EXT4_ENABLE_PIN) && EXT4_ENABLE_PIN > -1
+	WRITE(EXT4_ENABLE_PIN, EXT4_ENABLE_ON );
+	#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER
+	WRITE(EXT4_ENABLE2_PIN, EXT4_ENABLE_ON);
+	#endif
+	#endif
+	#if NUM_EXTRUDER > 5 && defined(EXT5_ENABLE_PIN) && EXT5_ENABLE_PIN > -1
+	WRITE(EXT5_ENABLE_PIN, EXT5_ENABLE_ON );
+	#if defined(EXT5_MIRROR_STEPPER) && EXT5_MIRROR_STEPPER
+	WRITE(EXT5_ENABLE2_PIN, EXT5_ENABLE_ON);
+	#endif
+	#endif
+	#else // MIXING_EXTRUDER
+	#if NUM_EXTRUDER > 0
+	switch(Extruder::current->id) {
+		#if defined(EXT0_MIRROR_STEPPER) && EXT0_MIRROR_STEPPER && NUM_EXTRUDER > 0
+		case 0:
+		WRITE(EXT0_ENABLE2_PIN, EXT0_ENABLE_ON);
+		break;
+		#endif
+		#if defined(EXT1_MIRROR_STEPPER) && EXT1_MIRROR_STEPPER && NUM_EXTRUDER > 1
+		case 1:
+		WRITE(EXT1_ENABLE2_PIN, EXT1_ENABLE_ON);
+		break;
+		#endif
+		#if defined(EXT2_MIRROR_STEPPER) && EXT2_MIRROR_STEPPER && NUM_EXTRUDER > 2
+		case 2:
+		WRITE(EXT2_ENABLE2_PIN, EXT2_ENABLE_ON);
+		break;
+		#endif
+		#if defined(EXT3_MIRROR_STEPPER) && EXT3_MIRROR_STEPPER && NUM_EXTRUDER > 3
+		case 3:
+		WRITE(EXT3_ENABLE2_PIN, EXT3_ENABLE_ON);
+		break;
+		#endif
+		#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER && NUM_EXTRUDER > 4
+		case 4:
+		WRITE(EXT4_ENABLE2_PIN, EXT4_ENABLE_ON);
+		break;
+		#endif
+		#if defined(EXT5_MIRROR_STEPPER) && EXT5_MIRROR_STEPPER && NUM_EXTRUDER > 5
+		case 5:
+		WRITE(EXT5_ENABLE2_PIN, EXT5_ENABLE_ON);
+		break;
+		#endif
+	}
+	if(Extruder::current->enablePin > -1)
+	HAL::digitalWrite(Extruder::current->enablePin, Extruder::current->enableOn);
+	#if FEATURE_DITTO_PRINTING
+	if(Extruder::dittoMode) {
+		if(extruder[1].enablePin > -1) {
+			HAL::digitalWrite(extruder[1].enablePin, extruder[1].enableOn);
+			#if defined(EXT1_MIRROR_STEPPER) && EXT1_MIRROR_STEPPER && NUM_EXTRUDER > 1
+			WRITE(EXT1_ENABLE2_PIN, EXT1_ENABLE_ON);
+			#endif
+		}
+		#if NUM_EXTRUDER > 2
+		if(Extruder::dittoMode > 1 && extruder[2].enablePin > -1) {
+			HAL::digitalWrite(extruder[2].enablePin, !extruder[2].enableOn);
+			#if defined(EXT2_MIRROR_STEPPER) && EXT2_MIRROR_STEPPER && NUM_EXTRUDER > 2
+			WRITE(EXT2_ENABLE2_PIN, EXT2_ENABLE_ON);
+			#endif
+		}
+		#endif
+		#if NUM_EXTRUDER > 3
+		if(Extruder::dittoMode > 2 && extruder[3].enablePin > -1) {
+			HAL::digitalWrite(extruder[3].enablePin, !extruder[3].enableOn);
+			#if defined(EXT3_MIRROR_STEPPER) && EXT3_MIRROR_STEPPER && NUM_EXTRUDER > 3
+			WRITE(EXT3_ENABLE2_PIN, EXT3_ENABLE_ON);
+			#endif
+		}
+		#endif
+	}
+	#endif
+	#endif
+	#endif // MIXING_EXTRUDER
 }
 void Extruder::disableAllExtruderMotors() {
     for(fast8_t i = 0; i < NUM_EXTRUDER; i++) {
@@ -1969,6 +2104,30 @@ void Extruder::disableAllExtruderMotors() {
 #if defined(EXT5_MIRROR_STEPPER) && EXT5_MIRROR_STEPPER && NUM_EXTRUDER > 5
     WRITE(EXT5_ENABLE2_PIN, !EXT5_ENABLE_ON);
 #endif
+}
+void Extruder::enableAllExtruderMotors() {
+	for(fast8_t i = 0; i < NUM_EXTRUDER; i++) {
+		if(extruder[i].enablePin > -1)
+		HAL::digitalWrite(extruder[i].enablePin, extruder[i].enableOn);
+	}
+	#if defined(EXT0_MIRROR_STEPPER) && EXT0_MIRROR_STEPPER && NUM_EXTRUDER > 0
+	WRITE(EXT0_ENABLE2_PIN, EXT0_ENABLE_ON);
+	#endif
+	#if defined(EXT1_MIRROR_STEPPER) && EXT1_MIRROR_STEPPER && NUM_EXTRUDER > 1
+	WRITE(EXT1_ENABLE2_PIN, EXT1_ENABLE_ON);
+	#endif
+	#if defined(EXT2_MIRROR_STEPPER) && EXT2_MIRROR_STEPPER && NUM_EXTRUDER > 2
+	WRITE(EXT2_ENABLE2_PIN, EXT2_ENABLE_ON);
+	#endif
+	#if defined(EXT3_MIRROR_STEPPER) && EXT3_MIRROR_STEPPER && NUM_EXTRUDER > 3
+	WRITE(EXT3_ENABLE2_PIN, EXT3_ENABLE_ON);
+	#endif
+	#if defined(EXT4_MIRROR_STEPPER) && EXT4_MIRROR_STEPPER && NUM_EXTRUDER > 4
+	WRITE(EXT4_ENABLE2_PIN, EXT4_ENABLE_ON);
+	#endif
+	#if defined(EXT5_MIRROR_STEPPER) && EXT5_MIRROR_STEPPER && NUM_EXTRUDER > 5
+	WRITE(EXT5_ENABLE2_PIN, EXT5_ENABLE_ON);
+	#endif
 }
 #define NUMTEMPS_1 28
 // Epcos B57560G0107F000
@@ -2387,6 +2546,15 @@ void Extruder::disableAllHeater() {
     autotuneIndex = 255;
 }
 
+float TemperatureController::getStatefulTemperature() {
+	if(isSensorDefect()) {
+		return -333.0;
+	}
+	if(isSensorDecoupled()) {
+		return -444.0;
+	}
+	return currentTemperatureC;
+}
 void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method) {
 	ENSURE_POWER
     if(method < 0) method = 0;
@@ -2419,7 +2587,7 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
         extruder[controllerId].coolerPWM = extruder[controllerId].coolerSpeed;
         extruder[0].coolerPWM = extruder[0].coolerSpeed;
     }
-    for(;;) {
+    while(!Printer::breakLongCommand) {
 #if FEATURE_WATCHDOG
         HAL::pingWatchdog();
 #endif // FEATURE_WATCHDOG

@@ -25,7 +25,7 @@
 #include <math.h>
 #include <stdint.h>
 
-#define REPETIER_VERSION "1.0.3"
+#define REPETIER_VERSION "1.0.4"
 
 // Use new communication model for multiple channels - only until stable, then old version gets deleted
 #define NEW_COMMUNICATION 1
@@ -211,7 +211,24 @@ usage or for searching for memory induced errors. Switch it off for production, 
 
 #include "Configuration.h"
 
-#if (LASvfaER_PWM_MAX > 255 && SUPPORT_LASER) || (CNC_PWM_MAX > 255 && SUPPORT_CNC)
+#ifndef EMERGENCY_PARSER
+#if DRIVE_SYSTEM != 3 || CPU_ARCH != ARCH_AVR
+#define EMERGENCY_PARSER 1
+#else
+#define EMERGENCY_PARSER 0
+#endif
+#endif
+
+#ifndef DUAL_X_AXIS_MODE
+#define DUAL_X_AXIS_MODE 0
+#endif
+
+#if DUAL_X_AXIS_MODE > 0
+#undef LAZY_DUAL_X_AXIS
+#define LAZY_DUAL_X_AXIS 0
+#endif
+
+#if (LASER_PWM_MAX > 255 && SUPPORT_LASER) || (CNC_PWM_MAX > 255 && SUPPORT_CNC)
 typedef uint16_t secondspeed_t;
 #else
 typedef uint8_t secondspeed_t;
@@ -986,7 +1003,11 @@ enum LsAction {LS_SerialPrint,LS_Count,LS_GetFilename};
 class SDCard
 {
 public:
-    SdFat fat;
+#if defined(ENABLE_SOFTWARE_SPI_CLASS) && ENABLE_SOFTWARE_SPI_CLASS
+	SdFatSoftSpi<SD_SOFT_MISO_PIN, SD_SOFT_MOSI_PIN, SD_SOFT_SCK_PIN> fat;
+#else
+	SdFat fat;
+#endif
     //Sd2Card card; // ~14 Byte
     //SdVolume volume;
     //SdFile root;

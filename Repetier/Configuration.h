@@ -27,7 +27,7 @@
    to see and change the data. You can also upload it to newer/older versions. The system
    will silently add new options, so compilation continues to work.
 
-   This file is optimized for version 1.0.3
+   This file is optimized for version 1.0.4dev
    generator: http://www.repetier.com/firmware/dev/
 
    If you are in doubt which named functions use which pins on your board, please check the
@@ -123,7 +123,7 @@
 #define EXT0_EXTRUDER_COOLER_PIN -1
 #define EXT0_EXTRUDER_COOLER_SPEED 255
 #define EXT0_DECOUPLE_TEST_PERIOD 60000
-#define EXT0_JAM_PIN -1
+#define EXT0_JAM_PIN ORIG_Z_MAX_PIN
 #define EXT0_JAM_PULLUP 0
 #define EXT1_X_OFFSET 0
 #define EXT1_Y_OFFSET 0
@@ -333,7 +333,7 @@
 // ############# Heated bed configuration ########################
 
 #define HAVE_HEATED_BED 1
-#define HEATED_BED_PREHEAT_TEMP 50
+#define HEATED_BED_PREHEAT_TEMP 55
 #define HEATED_BED_MAX_TEMP 120
 #define SKIP_M190_IF_WITHIN 3
 #define HEATED_BED_SENSOR_TYPE 1
@@ -495,12 +495,11 @@ It also can add a delay to wait for spindle to run on full speed.
 #define INVERT_Z2_DIR 0
 #define INVERT_Z3_DIR 0
 #define INVERT_Z4_DIR 0
-#define INVERT_Z5_DIR 0
 #define X_HOME_DIR -1
 #define Y_HOME_DIR -1
 #define Z_HOME_DIR -1
-#define X_MAX_LENGTH 220
-#define Y_MAX_LENGTH 220
+#define X_MAX_LENGTH 200
+#define Y_MAX_LENGTH 200
 #define Z_MAX_LENGTH 200
 #define X_MIN_POS 0
 #define Y_MIN_POS 0
@@ -603,10 +602,6 @@ It also can add a delay to wait for spindle to run on full speed.
 #define Z4_STEP_PIN   ORIG_E3_STEP_PIN
 #define Z4_DIR_PIN    ORIG_E3_DIR_PIN
 #define Z4_ENABLE_PIN ORIG_E3_ENABLE_PIN
-#define FEATURE_FIVE_ZSTEPPER 0
-#define Z5_STEP_PIN   ORIG_E4_STEP_PIN
-#define Z5_DIR_PIN    ORIG_E4_DIR_PIN
-#define Z5_ENABLE_PIN ORIG_E4_ENABLE_PIN
 #define FEATURE_DITTO_PRINTING 0
 #define USE_ADVANCE 0
 #define ENABLE_QUADRATIC_ADVANCE 0
@@ -716,7 +711,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define FEATURE_MEMORY_POSITION 1
 #define FEATURE_CHECKSUM_FORCED 0
 #define FEATURE_FAN_CONTROL 1
-#define FEATURE_FAN2_CONTROL 0
+#define FEATURE_FAN2_CONTROL 1
 #define FEATURE_CONTROLLER 2
 #define ADC_KEYPAD_PIN -1
 #define LANGUAGE_EN_ACTIVE 1
@@ -731,6 +726,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define LANGUAGE_CZ_ACTIVE 0
 #define LANGUAGE_PL_ACTIVE 0
 #define LANGUAGE_TR_ACTIVE 0
+#define LANGUAGE_RU_ACTIVE 0
 #define UI_PRINTER_NAME "Tarantula Diamond Full Color"
 #define UI_PRINTER_COMPANY "TEVO"
 #define UI_PAGES_DURATION 4000
@@ -794,7 +790,6 @@ Values must be in range 1..255
     "z2Invert": 0,
     "z3Invert": 0,
     "z4Invert": 0,
-	"z5Invert": 0,
     "zInvertEnable": 0,
     "extruder": [
         {
@@ -838,8 +833,8 @@ Values must be in range 1..255
                 "enable": "ORIG_E0_ENABLE_PIN"
             },
             "advanceBacklashSteps": 0,
-            "decoupleTestPeriod": 12,
-            "jamPin": -1,
+            "decoupleTestPeriod": 60,
+            "jamPin": "ORIG_Z_MAX_PIN",
             "jamPullup": "0",
             "mirror": "0",
             "invert2": "0",
@@ -892,7 +887,7 @@ Values must be in range 1..255
                 "enable": "ORIG_E1_ENABLE_PIN"
             },
             "advanceBacklashSteps": 0,
-            "decoupleTestPeriod": 12,
+            "decoupleTestPeriod": 60,
             "jamPin": -1,
             "jamPullup": "0",
             "mirror": "0",
@@ -946,7 +941,7 @@ Values must be in range 1..255
                 "enable": "ORIG_E2_ENABLE_PIN"
             },
             "advanceBacklashSteps": 0,
-            "decoupleTestPeriod": 12,
+            "decoupleTestPeriod": 60,
             "jamPin": -1,
             "jamPullup": "0",
             "mirror": "0",
@@ -1000,7 +995,7 @@ Values must be in range 1..255
                 "enable": "ORIG_E3_ENABLE_PIN"
             },
             "advanceBacklashSteps": 0,
-            "decoupleTestPeriod": 12,
+            "decoupleTestPeriod": 60,
             "jamPin": -1,
             "jamPullup": "0",
             "mirror": "0",
@@ -1054,7 +1049,7 @@ Values must be in range 1..255
                 "enable": "ORIG_E4_ENABLE_PIN"
             },
             "advanceBacklashSteps": 0,
-            "decoupleTestPeriod": 12,
+            "decoupleTestPeriod": 60,
             "jamPin": -1,
             "jamPullup": "0",
             "mirror": "0",
@@ -1207,13 +1202,6 @@ Values must be in range 1..255
         "dir": "ORIG_E3_DIR_PIN",
         "enable": "ORIG_E3_ENABLE_PIN"
     },
-    "mirrorZ5": "0",
-    "mirrorZ5Motor": {
-        "name": "Extruder 4",
-        "step": "ORIG_E4_STEP_PIN",
-        "dir": "ORIG_E4_DIR_PIN",
-        "enable": "ORIG_E4_ENABLE_PIN"
-    },
     "dittoPrinting": "0",
     "featureServos": "0",
     "servo0Pin": 11,
@@ -1317,7 +1305,7 @@ Values must be in range 1..255
     "sdExtendedDir": "1",
     "featureFanControl": "1",
     "fanPin": "ORIG_FAN_PIN",
-    "featureFan2Control": "0",
+    "featureFan2Control": "1",
     "fan2Pin": "ORIG_FAN2_PIN",
     "fanThermoPin": -1,
     "fanThermoMinPWM": 128,
@@ -1555,6 +1543,7 @@ Values must be in range 1..255
     "langCZ": "0",
     "langPL": "0",
     "langTR": "0",
+    "langRU": "0",
     "interpolateAccelerationWithZ": 0,
     "accelerationFactorTop": 100,
     "bendingCorrectionA": 0,
@@ -1633,16 +1622,12 @@ Values must be in range 1..255
     "TMC2130CSE0": -1,
     "TMC2130CSE1": -1,
     "TMC2130CSE2": -1,
-    "TMC2130CSE3": -1,
-    "TMC2130CSE4": -1,
     "TMC2130CurrentX": 1000,
     "TMC2130CurrentY": 1000,
     "TMC2130CurrentZ": 1000,
     "TMC2130CurrentE0": 1000,
     "TMC2130CurrentE1": 1000,
     "TMC2130CurrentE2": 1000,
-    "TMC2130CurrentE3": 1000,
-    "TMC2130CurrentE4": 1000,
     "TMC2130CoolstepTresholdX": 300,
     "TMC2130CoolstepTresholdY": 300,
     "TMC2130CoolstepTresholdZ": 300,
@@ -1652,11 +1637,24 @@ Values must be in range 1..255
     "microstepE0": 16,
     "microstepE1": 16,
     "microstepE2": 16,
-    "microstepE3": 16,
-    "microstepE4": 16,
     "parkPosX": 0,
     "parkPosY": 0,
     "parkPosZ": 10,
+    "emergencyParser": -1,
+    "z5Invert": 0,
+    "mirrorZ5": "0",
+    "mirrorZ5Motor": {
+        "name": "Extruder 4",
+        "step": "ORIG_E4_STEP_PIN",
+        "dir": "ORIG_E4_DIR_PIN",
+        "enable": "ORIG_E4_ENABLE_PIN"
+    },
+    "TMC2130CSE3": -1,
+    "TMC2130CSE4": -1,
+    "TMC2130CurrentE3": 1000,
+    "TMC2130CurrentE4": 1000,
+    "microstepE3": 16,
+    "microstepE4": 16,
     "uiAnimation": "0",
     "uiPresetBedTempPLA": 50,
     "uiPresetBedABS": 90,
@@ -1671,7 +1669,7 @@ Values must be in range 1..255
     "hasUser1": false,
     "hasUser2": false,
     "numExtruder": 5,
-    "version": 100.2,
+    "version": 100.4,
     "primaryPortName": ""
 }
 ========== End configuration string ==========

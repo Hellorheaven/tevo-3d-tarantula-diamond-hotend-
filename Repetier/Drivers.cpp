@@ -17,12 +17,6 @@ MOTOR_DRIVER_5(motorDriver5);
 #if NUM_MOTOR_DRIVERS > 5
 MOTOR_DRIVER_6(motorDriver6);
 #endif
-#if NUM_MOTOR_DRIVERS > 6
-MOTOR_DRIVER_7(motorDriver7);
-#endif
-#if NUM_MOTOR_DRIVERS > 7
-MOTOR_DRIVER_8(motorDriver8);
-#endif
 
 MotorDriverInterface *motorDrivers[NUM_MOTOR_DRIVERS] =
 {
@@ -41,12 +35,6 @@ MotorDriverInterface *motorDrivers[NUM_MOTOR_DRIVERS] =
 #endif
 #if NUM_MOTOR_DRIVERS > 5
     , &motorDriver6
-#endif
-#if NUM_MOTOR_DRIVERS > 6
-    , &motorDriver7
-#endif
-#if NUM_MOTOR_DRIVERS > 7
-    , &motorDriver8
 #endif
 };
 

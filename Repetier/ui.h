@@ -270,6 +270,7 @@
 #define UI_ACTION_LANGUAGE_PL           1709
 #define UI_ACTION_LANGUAGE_TR           1710
 #define UI_ACTION_LANGUAGE_FI           1711
+#define UI_ACTION_LANGUAGE_RU           1712
 
 #define UI_ACTION_MENU_XPOS             4000
 #define UI_ACTION_MENU_YPOS             4001
@@ -334,7 +335,7 @@ struct UIMenu_s {
   // 2 = sub menu
   // 3 = modification menu
   // 5 = Wizard menu
-  // +128 = sticky -> no autoreturn to main menu after timeout
+  // +128 = sticky -> no autoreturn to main menuü after timeout
   uint8_t menuType;
   int id; // Type of modification
   int numEntries;
@@ -555,6 +556,14 @@ const UIMenu name PROGMEM = {5,action,5,name ## _entries};
 #define SDSUPPORT 1
 #endif
 
+// RADDS + RADDS2LCD + Full Graphics Smart Controller / RRD Smartcontroller 4x20
+#if MOTHERBOARD == 402 && (FEATURE_CONTROLLER == CONTROLLER_SMARTRAMPS || FEATURE_CONTROLLER == CONTROLLER_REPRAPDISCOUNT_GLCD)
+#undef SDCARDDETECT
+#define SDCARDDETECT 14
+#undef SDSUPPORT
+#define SDSUPPORT 1
+#endif // FEATURE_CONTROLLER == CONTROLLER_RADDS_FGSC
+
 #if FEATURE_CONTROLLER == CONTROLLER_VIKI2
 #undef SDCARDDETECT
 #define SDCARDDETECT -1
@@ -673,3 +682,4 @@ extern UIDisplay uid;
 
 
 #endif
+

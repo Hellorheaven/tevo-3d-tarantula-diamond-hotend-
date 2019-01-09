@@ -21,6 +21,8 @@ which based on Tonokip RepRap firmware rewrite based off of Hydra-mmm firmware.
 #ifndef RF_DISPLAY
 #define RF_DISPLAY
 
+#define UI_FONT_DEFAULT_RU ISO_6x10
+#define UI_FONT_SMALL_RU ISO_5x7
 
 #if FEATURE_CONTROLLER == UICONFIG_CONTROLLER
 #include "uiconfig.h"
@@ -298,7 +300,7 @@ void uiCheckSlowKeys(uint16_t &action) {}
 #undef SDCARDDETECTINVERTED
 #define SDCARDDETECTINVERTED   0
 
-#elif MOTHERBOARD == 414 // RURAMPS4D
+#elif ( MOTHERBOARD == 414 ) || ( MOTHERBOARD == 415 ) // RURAMPS4D
 
 #undef BEEPER_PIN
 #define BEEPER_PIN        62
@@ -318,6 +320,57 @@ void uiCheckSlowKeys(uint16_t &action) {}
 #define UI_ENCODER_CLICK 40
 #define UI_RESET_PIN -1
 #define UI_INVERT_MENU_DIRECTION 1
+
+#elif MOTHERBOARD == 402 // RADDS with RADDS2LCD Adapter 
+// https://www.thingiverse.com/thing:1740725/files
+#define BEEPER_TYPE 1
+#undef BEEPER_PIN
+#define BEEPER_PIN             41
+#define UI_DISPLAY_RS_PIN      42
+#define UI_DISPLAY_RW_PIN      -1
+#define UI_DISPLAY_ENABLE_PIN  43
+#define UI_DISPLAY_D0_PIN      44
+#define UI_DISPLAY_D1_PIN      45
+#define UI_DISPLAY_D2_PIN      46
+#define UI_DISPLAY_D3_PIN      47
+#define UI_DISPLAY_D4_PIN      44
+#define UI_DISPLAY_D5_PIN      45
+#define UI_DISPLAY_D6_PIN      46
+#define UI_DISPLAY_D7_PIN      47
+
+// swap these two numbers to invert rotary encoder scroll direction
+#define UI_ENCODER_A           50
+#define UI_ENCODER_B           52
+
+#define UI_ENCODER_CLICK       48
+#define UI_RESET_PIN           -1
+#define UI_DELAYPERCHAR 50
+#define UI_INVERT_MENU_DIRECTION 0
+#define UI_BUTTON_BACK         71
+
+#elif MOTHERBOARD == 403 || MOTHERBOARD == 404
+
+ // ramps-fd lcd adaptor needs to rotate connectors 180° to work!
+#define UI_DISPLAY_RS_PIN         16
+#define UI_DISPLAY_ENABLE_PIN     17
+#define UI_DISPLAY_D4_PIN         23
+#define UI_DISPLAY_D5_PIN         25
+#define UI_DISPLAY_D6_PIN         27
+#define UI_DISPLAY_D7_PIN         29
+#define BEEPER_PIN                37
+#define UI_ENCODER_A              33
+#define UI_ENCODER_B              31
+#define UI_ENCODER_CLICK          35
+#define UI_RESET_PIN              -1
+#define UI_DELAYPERCHAR 50
+#define UI_INVERT_MENU_DIRECTION   0
+#define UI_BUTTON_BACK            -1
+#undef SDCARDDETECT
+#define SDCARDDETECT           49
+#undef SDCARDDETECTINVERTED
+#define SDCARDDETECTINVERTED   0
+#undef SDSUPPORT
+#define SDSUPPORT              1
 
 #else  // RAMPS
 
