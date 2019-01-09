@@ -711,7 +711,7 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 #define FEATURE_MEMORY_POSITION 1
 #define FEATURE_CHECKSUM_FORCED 0
 #define FEATURE_FAN_CONTROL 1
-#define FEATURE_FAN2_CONTROL 1
+#define FEATURE_FAN2_CONTROL 0
 #define FEATURE_CONTROLLER 2
 #define ADC_KEYPAD_PIN -1
 #define LANGUAGE_EN_ACTIVE 1
@@ -1305,8 +1305,8 @@ Values must be in range 1..255
     "sdExtendedDir": "1",
     "featureFanControl": "1",
     "fanPin": "ORIG_FAN_PIN",
-    "featureFan2Control": "1",
-    "fan2Pin": "ORIG_FAN2_PIN",
+    "featureFan2Control": "0",
+    "fan2Pin": "-1",
     "fanThermoPin": -1,
     "fanThermoMinPWM": 128,
     "fanThermoMaxPWM": 255,
